@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 const modules = [
@@ -27,19 +28,38 @@ export default function Home() {
           </div>
         </div>
 
-        <nav aria-label="Navegação principal" className="nav-list">
-          {modules.map((module) => (
-            <button
-              key={module.id}
-              type="button"
-              className={`nav-item ${activePage === module.id ? "active" : ""}`}
-              aria-current={activePage === module.id ? "page" : undefined}
-              onClick={() => setActivePage(module.id)}
-            >
-              {module.label}
-            </button>
-          ))}
-        </nav>
+<nav aria-label="Navegação principal" className="nav-list">
+  {modules.map((module) => {
+    const itemClass = `nav-item ${
+      activePage === module.id ? "active" : ""
+    }`;
+
+    if (module.id === "produtos") {
+      return (
+        <Link
+          key={module.id}
+          href="/produtos"
+          className={itemClass}
+          aria-current={activePage === module.id ? "page" : undefined}
+        >
+          {module.label}
+        </Link>
+      );
+    }
+
+    return (
+      <button
+        key={module.id}
+        type="button"
+        className={itemClass}
+        aria-current={activePage === module.id ? "page" : undefined}
+        onClick={() => setActivePage(module.id)}
+      >
+        {module.label}
+      </button>
+    );
+  })}
+</nav>
       </aside>
 
       <main className="content">
