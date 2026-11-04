@@ -17,6 +17,7 @@ model Product {
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  saleItems     SaleItem[]
 
   lots          Lot[]
 }
@@ -29,8 +30,35 @@ model Lot {
   unitCost       Decimal  @db.Decimal(10, 2)
   expiresAt      DateTime? @db.Date
   createdAt      DateTime @default(now())
+  saleItems      SaleItem[]
 
   product        Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   @@index([productId, expiresAt])
+}
+
+model Sale {
+  id        String     @id @default(cuid())
+  total     Decimal    @db.Decimal(10, 2)
+  paymentMethod String?
+  createdAt DateTime   @default(now())
+  items     SaleItem[]
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  saleId    String
+  productId String
+  lotId     String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  unitCost  Decimal @db.Decimal(10, 2)
+
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  lot     Lot     @relation(fields: [lotId], references: [id], onDelete: Restrict)
+
+  @@index([saleId])
+  @@index([productId])
+  @@index([lotId])
 }

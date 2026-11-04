@@ -34,8 +34,16 @@ export default function Home() {
       activePage === module.id ? "active" : ""
     }`;
 
- if (module.id === "produtos" || module.id === "estoque") {
-  const href = module.id === "produtos" ? "/produtos" : "/estoque";
+if (
+  module.id === "produtos" ||
+  module.id === "estoque" ||
+  module.id === "vendas"
+) {
+  const href = {
+    produtos: "/produtos",
+    estoque: "/estoque",
+    vendas: "/vendas",
+  }[module.id];
 
   return (
     <Link
