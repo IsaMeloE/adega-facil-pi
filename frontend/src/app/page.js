@@ -1,3 +1,5 @@
+import styles from "../app/produtos/produtos.module.css";
+
 export default function Home() {
   return (
     <>
@@ -6,7 +8,14 @@ export default function Home() {
           <p className="eyebrow">GESTÃO DE BEBIDAS</p>
           <h1>Painel</h1>
         </div>
-        <span className="user-badge">Administrador</span>
+
+        <div className={styles.userInfo}>
+          <span className={styles.userAvatar}>AD</span>
+          <div>
+            <strong>Administrador</strong>
+            <small>Administrador</small>
+          </div>
+        </div>
       </header>
 
       <section className="summary-grid" aria-label="Resumo da operação">

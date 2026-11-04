@@ -512,3 +512,66 @@
     grid-template-columns: 1fr;
   }
 }
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.listHeader h2 {
+  margin: 0;
+}
+
+.search {
+  width: min(100%, 280px);
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--color-control);
+  font: inherit;
+  font-size: 11px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.statusOk {
+  background: #edf8f2;
+  color: #216b43;
+}
+
+.statusWarning {
+  background: #fff5e5;
+  color: #8a5a00;
+}
+
+.statusDanger {
+  background: #fcebec;
+  color: #a3212d;
+}
+
+.statusMuted {
+  background: #f1f2f4;
+  color: #71717a;
+}
+
+@media (max-width: 600px) {
+  .listHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search {
+    width: 100%;
+  }
+}

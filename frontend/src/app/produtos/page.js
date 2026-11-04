@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import styles from "./produtos.module.css";
 
 const formInicial = {
@@ -15,35 +14,36 @@ const formInicial = {
 export default function ProdutosPage() {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(formInicial);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-  const controller = new AbortController();
+    const controller = new AbortController();
 
-  fetch("/api/products", { signal: controller.signal })
-    .then(async (response) => {
-      if (!response.ok) {
-        throw new Error("Não foi possível carregar os produtos.");
-      }
+    fetch("/api/products", { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar os produtos.");
+        }
 
-      setProducts(await response.json());
-    })
-    .catch((requestError) => {
-      if (requestError.name !== "AbortError") {
-        setError(requestError.message);
-      }
-    })
-    .finally(() => {
-      if (!controller.signal.aborted) {
-        setIsLoading(false);
-      }
-    });
+        setProducts(await response.json());
+      })
+      .catch((requestError) => {
+        if (requestError.name !== "AbortError") {
+          setError(requestError.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
+      });
 
-  return () => controller.abort();
-}, []);
+    return () => controller.abort();
+  }, []);
 
   function atualizarCampo(event) {
     const { name, value } = event.target;
@@ -85,17 +85,27 @@ export default function ProdutosPage() {
       setSuccess("Produto cadastrado com sucesso.");
       const productsResponse = await fetch("/api/products");
 
-if (!productsResponse.ok) {
-  throw new Error("Produto cadastrado, mas não foi possível atualizar a lista.");
-}
+      if (!productsResponse.ok) {
+        throw new Error("Produto cadastrado, mas não foi possível atualizar a lista.");
+      }
 
-setProducts(await productsResponse.json());
+      setProducts(await productsResponse.json());
     } catch (requestError) {
       setError(requestError.message);
     } finally {
       setIsSaving(false);
     }
   }
+
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const filteredProducts = products.filter((product) =>
+    [product.name, product.category, product.barcode].some((value) =>
+      String(value || "").toLowerCase().includes(normalizedSearch),
+    ),
+  );
+
 
   return (
     <main className={styles.container}>
@@ -105,9 +115,14 @@ setProducts(await productsResponse.json());
           <h1>Produtos</h1>
         </div>
 
-        <Link className={styles.backLink} href="/">
-          Voltar ao painel
-        </Link>
+        <div className={styles.userInfo}>
+          <span className={styles.userAvatar}>AD</span>
+          <div>
+            <strong>Administrador</strong>
+            <small>Administrador</small>
+          </div>
+        </div>
+
       </header>
 
       <section className={styles.formCard} aria-labelledby="form-title">
@@ -197,48 +212,78 @@ setProducts(await productsResponse.json());
       </section>
 
       <section className={styles.listCard} aria-labelledby="list-title">
-        <h2 id="list-title">Produtos cadastrados</h2>
+        <div className={styles.listHeader}>
+          <h2 id="list-title">Produtos cadastrados</h2>
+
+          <input
+            className={styles.search}
+            type="search"
+            aria-label="Buscar produto"
+            placeholder="Buscar produto"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </div>
 
         {isLoading ? (
           <p role="status">Carregando produtos...</p>
         ) : products.length === 0 ? (
           <p>Nenhum produto cadastrado.</p>
+        ) : filteredProducts.length === 0 ? (
+          <p>Nenhum produto encontrado.</p>
         ) : (
           <div className={styles.tableWrapper}>
             <table>
               <caption className={styles.srOnly}>
-                Produtos, preço de venda e quantidade em estoque
+                Produtos, categorias, lotes, preços e situação do estoque
               </caption>
-
               <thead>
                 <tr>
                   <th scope="col">Produto</th>
                   <th scope="col">Categoria</th>
-                  <th scope="col">Preço</th>
+                  <th scope="col">Lotes</th>
                   <th scope="col">Estoque</th>
+                  <th scope="col">Preço</th>
                   <th scope="col">Código de barras</th>
+                  <th scope="col">Situação</th>
                 </tr>
               </thead>
-
               <tbody>
-                {products.map((product) => {
-                  const stock = product.lots.reduce(
+                {filteredProducts.map((product) => {
+                  const lots = product.lots || [];
+                  const stock = lots.reduce(
                     (total, lot) => total + lot.quantity,
                     0,
                   );
+
+                  const status = !product.isActive
+                    ? { label: "Inativo", className: styles.statusMuted }
+                    : stock === 0
+                      ? { label: "Sem estoque", className: styles.statusDanger }
+                      : stock <= product.minimumStock
+                        ? { label: "Estoque baixo", className: styles.statusWarning }
+                        : { label: "Ativo", className: styles.statusOk };
 
                   return (
                     <tr key={product.id}>
                       <th scope="row">{product.name}</th>
                       <td>{product.category || "—"}</td>
+                      <td>{lots.length}</td>
+                      <td>{stock} unidades</td>
                       <td>
                         {Number(product.salePrice).toLocaleString("pt-BR", {
                           style: "currency",
                           currency: "BRL",
                         })}
                       </td>
-                      <td>{stock} unidades</td>
                       <td>{product.barcode || "—"}</td>
+                      <td>
+                        <span
+                          className={`${styles.statusBadge} ${status.className}`}
+                        >
+                          {status.label}
+                        </span>
+                      </td>
                     </tr>
                   );
                 })}

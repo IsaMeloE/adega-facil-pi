@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import styles from "../produtos/produtos.module.css";
 
 const formInicial = {
@@ -112,9 +111,14 @@ export default function EstoquePage() {
           <h1>Estoque</h1>
         </div>
 
-        <Link className={styles.backLink} href="/">
-          Voltar ao painel
-        </Link>
+        <div className={styles.userInfo}>
+          <span className={styles.userAvatar}>AD</span>
+          <div>
+            <strong>Administrador</strong>
+            <small>Administrador</small>
+          </div>
+        </div>
+
       </header>
 
       <section className={styles.formCard} aria-labelledby="form-title">

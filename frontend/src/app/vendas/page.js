@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import styles from "../produtos/produtos.module.css";
 
 const formatarMoeda = (valor) =>
