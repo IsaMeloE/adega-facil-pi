@@ -11,9 +11,40 @@ const formInicial = {
   expiresAt: "",
 };
 
+function getLotValidityStatus(expiresAt) {
+  if (!expiresAt) {
+    return { label: "Sem validade", className: styles.statusMuted };
+  }
+
+  const expiryDate = String(expiresAt).slice(0, 10);
+  const now = new Date();
+
+  const formatDate = (date) =>
+    [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+
+  const today = formatDate(now);
+  const limit = new Date(now);
+  limit.setDate(limit.getDate() + 30);
+
+  if (expiryDate < today) {
+    return { label: "Vencido", className: styles.statusDanger };
+  }
+
+  if (expiryDate <= formatDate(limit)) {
+    return { label: "Vence em breve", className: styles.statusWarning };
+  }
+
+  return { label: "Em dia", className: styles.statusOk };
+}
+
 export default function EstoquePage() {
   const [products, setProducts] = useState([]);
   const [lots, setLots] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [form, setForm] = useState(formInicial);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -103,11 +134,20 @@ export default function EstoquePage() {
     }
   }
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const filteredLots = lots.filter((lot) =>
+    [lot.product?.name, lot.product?.category, lot.product?.barcode, lot.lotCode]
+      .some((value) =>
+        String(value || "").toLowerCase().includes(normalizedSearch),
+      ),
+  );
+
   return (
     <main className={styles.container}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>GESTÃO DE BEBIDAS</p>
+          <p className={styles.eyebrow}>CONTROLE</p>
           <h1>Estoque</h1>
         </div>
 
@@ -122,7 +162,7 @@ export default function EstoquePage() {
       </header>
 
       <section className={styles.formCard} aria-labelledby="form-title">
-        <h2 id="form-title">Adicionar lote ao estoque</h2>
+        <h2 id="form-title">Adicionar Lote/Reposição</h2>
 
         <form className={styles.form} onSubmit={salvarLote}>
           <div className={styles.field}>
@@ -202,12 +242,25 @@ export default function EstoquePage() {
       </section>
 
       <section className={styles.listCard} aria-labelledby="list-title">
-        <h2 id="list-title">Lotes cadastrados</h2>
+        <div className={styles.listHeader}>
+          <h2 id="list-title">Lotes cadastrados</h2>
+
+          <input
+            className={styles.search}
+            type="search"
+            aria-label="Buscar por produto ou lote"
+            placeholder="Buscar produto ou lote"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </div>
 
         {isLoading ? (
           <p role="status">Carregando estoque...</p>
         ) : lots.length === 0 ? (
           <p>Nenhum lote cadastrado.</p>
+        ) : filteredLots.length === 0 ? (
+          <p>Nenhum lote encontrado.</p>
         ) : (
           <div className={styles.tableWrapper}>
             <table>
@@ -221,27 +274,39 @@ export default function EstoquePage() {
                   <th scope="col">Quantidade</th>
                   <th scope="col">Custo unitário</th>
                   <th scope="col">Validade</th>
+                  <th scope="col">Situação</th>
                 </tr>
               </thead>
               <tbody>
-                {lots.map((lot) => (
-                  <tr key={lot.id}>
-                    <th scope="row">{lot.product.name}</th>
-                    <td>{lot.lotCode || "—"}</td>
-                    <td>{lot.quantity}</td>
-                    <td>
-                      {Number(lot.unitCost).toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
-                    </td>
-                    <td>
-                      {lot.expiresAt
-                        ? lot.expiresAt.slice(0, 10).split("-").reverse().join("/")
-                        : "Sem validade"}
-                    </td>
-                  </tr>
-                ))}
+                {filteredLots.map((lot) => {
+                  const validity = getLotValidityStatus(lot.expiresAt);
+
+                  return (
+                    <tr key={lot.id}>
+                      <th scope="row">{lot.product.name}</th>
+                      <td>{lot.lotCode || "—"}</td>
+                      <td>{lot.quantity} unidades</td>
+                      <td>
+                        {Number(lot.unitCost).toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
+                      </td>
+                      <td>
+                        {lot.expiresAt
+                          ? lot.expiresAt.slice(0, 10).split("-").reverse().join("/")
+                          : "Sem validade"}
+                      </td>
+                      <td>
+                        <span
+                          className={`${styles.statusBadge} ${validity.className}`}
+                        >
+                          {validity.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -11,6 +11,41 @@ const formInicial = {
   minimumStock: "0",
 };
 
+function getValidityStatus(lots = []) {
+  const expiryDates = lots
+    .filter((lot) => lot.expiresAt)
+    .map((lot) => String(lot.expiresAt).slice(0, 10));
+
+  if (expiryDates.length === 0) {
+    return { label: "Sem validade", className: styles.statusMuted };
+  }
+
+  const now = new Date();
+  const today = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+
+  const limit = new Date(now);
+  limit.setDate(limit.getDate() + 30);
+  const thirtyDaysFromNow = [
+    limit.getFullYear(),
+    String(limit.getMonth() + 1).padStart(2, "0"),
+    String(limit.getDate()).padStart(2, "0"),
+  ].join("-");
+
+  if (expiryDates.some((date) => date < today)) {
+    return { label: "Lote vencido", className: styles.statusDanger };
+  }
+
+  if (expiryDates.some((date) => date <= thirtyDaysFromNow)) {
+    return { label: "Vence em breve", className: styles.statusWarning };
+  }
+
+  return { label: "Em dia", className: styles.statusOk };
+}
+
 export default function ProdutosPage() {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(formInicial);
@@ -253,6 +288,7 @@ export default function ProdutosPage() {
                   <th scope="col">Estoque</th>
                   <th scope="col">Preço</th>
                   <th scope="col">Código de barras</th>
+                  <th scope="col">Validade</th>
                   <th scope="col">Situação</th>
                 </tr>
               </thead>
@@ -272,6 +308,8 @@ export default function ProdutosPage() {
                         ? { label: "Estoque baixo", className: styles.statusWarning }
                         : { label: "Ativo", className: styles.statusOk };
 
+                  const validity = getValidityStatus(lots);
+
                   return (
                     <tr key={product.id}>
                       <th scope="row">{product.name}</th>
@@ -285,6 +323,11 @@ export default function ProdutosPage() {
                         })}
                       </td>
                       <td>{product.barcode || "—"}</td>
+                      <td>
+                        <span className={`${styles.statusBadge} ${validity.className}`}>
+                          {validity.label}
+                        </span>
+                      </td>
                       <td>
                         <span
                           className={`${styles.statusBadge} ${status.className}`}
