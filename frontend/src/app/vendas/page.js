@@ -16,6 +16,19 @@ const rotulosPagamento = {
   CARTAO_CREDITO: "Cartão de crédito",
 };
 
+function loteDentroDaValidade(lot) {
+  if (!lot.expiresAt) return true;
+
+  const hoje = new Date();
+  const dataHoje = [
+    hoje.getFullYear(),
+    String(hoje.getMonth() + 1).padStart(2, "0"),
+    String(hoje.getDate()).padStart(2, "0"),
+  ].join("-");
+
+  return lot.expiresAt.slice(0, 10) >= dataHoje;
+}
+
 export default function VendasPage() {
   const [products, setProducts] = useState([]);
   const [sales, setSales] = useState([]);
@@ -79,7 +92,7 @@ export default function VendasPage() {
       return;
     }
 
-    const availableStock = (product.lots || []).reduce(
+    const availableStock = (product.lots || []).filter(loteDentroDaValidade).reduce(
       (total, lot) => total + lot.quantity,
       0,
     );
@@ -252,7 +265,7 @@ export default function VendasPage() {
                     {products
                       .filter((product) => product.isActive)
                       .map((product) => {
-                        const stock = (product.lots || []).reduce(
+                        const stock = (product.lots || []).filter(loteDentroDaValidade).reduce(
                           (total, lot) => total + lot.quantity,
                           0,
                         );

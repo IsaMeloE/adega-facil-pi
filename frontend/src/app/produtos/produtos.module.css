@@ -575,3 +575,36 @@
     width: 100%;
   }
 }
+
+.productsSubtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.formDescription {
+  margin: -10px 0 18px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.fieldFullWidth,
+.formSubmit {
+  grid-column: 1 / -1;
+}
+
+.formSubmit {
+  width: 100%;
+}
+
+.fefoInfo {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid #f0d58a;
+  border-radius: 10px;
+  background: #fff8e5;
+  color: #5f4a19;
+  font-size: 11px;
+  line-height: 1.5;
+}

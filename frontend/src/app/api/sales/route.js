@@ -114,6 +114,9 @@ export async function POST(request) {
       productIds.add(item.productId);
     }
 
+    const inicioDoDia = new Date();
+    inicioDoDia.setHours(0, 0, 0, 0);
+
     const sale = await prisma.$transaction(
       async (tx) => {
         let totalCents = deliveryFeeCents;
@@ -125,11 +128,13 @@ export async function POST(request) {
             where: { id: item.productId },
             include: {
               lots: {
-                where: { quantity: { gt: 0 } },
-                orderBy: [
-                  { expiresAt: { sort: "asc", nulls: "last" } },
-                  { createdAt: "asc" },
-                ],
+                where: {
+                  quantity: { gt: 0 },
+                  OR: [
+                    { expiresAt: null },
+                    { expiresAt: { gte: inicioDoDia } },
+                  ],
+                },
               },
             },
           });
@@ -147,7 +152,7 @@ export async function POST(request) {
 
           if (availableQuantity < item.quantity) {
             throw Object.assign(
-              new Error(`Estoque insuficiente para ${product.name}.`),
+              new Error(`Estoque válido insuficiente para ${product.name}.`),
               { status: 409 },
             );
           }

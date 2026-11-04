@@ -111,8 +111,11 @@ export default function ProdutosPage() {
     <main className={styles.container}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>GESTÃO DE BEBIDAS</p>
+          <p className={styles.eyebrow}>CATÁLOGO</p>
           <h1>Produtos</h1>
+          <p className={styles.productsSubtitle}>
+            Gerencie o catálogo e acompanhe os níveis de estoque.
+          </p>
         </div>
 
         <div className={styles.userInfo}>
@@ -127,9 +130,14 @@ export default function ProdutosPage() {
 
       <section className={styles.formCard} aria-labelledby="form-title">
         <h2 id="form-title">Cadastrar produto</h2>
+        <p className={styles.fefoInfo}>
+          Cada produto pode ter vários lotes, com quantidades e validades controladas em
+          Estoque. Na venda, o sistema prioriza os lotes válidos que vencem primeiro
+          (FEFO).
+        </p>
 
         <form className={styles.form} onSubmit={salvarProduto}>
-          <div className={styles.field}>
+          <div className={`${styles.field} ${styles.fieldFullWidth}`}>
             <label htmlFor="name">Nome do produto</label>
             <input
               id="name"
@@ -190,7 +198,7 @@ export default function ProdutosPage() {
           </div>
 
           <button
-            className={styles.button}
+            className={`${styles.button} ${styles.formSubmit}`}
             type="submit"
             disabled={isSaving}
           >
