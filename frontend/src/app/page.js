@@ -34,18 +34,20 @@ export default function Home() {
       activePage === module.id ? "active" : ""
     }`;
 
-    if (module.id === "produtos") {
-      return (
-        <Link
-          key={module.id}
-          href="/produtos"
-          className={itemClass}
-          aria-current={activePage === module.id ? "page" : undefined}
-        >
-          {module.label}
-        </Link>
-      );
-    }
+ if (module.id === "produtos" || module.id === "estoque") {
+  const href = module.id === "produtos" ? "/produtos" : "/estoque";
+
+  return (
+    <Link
+      key={module.id}
+      className="nav-item"
+      href={href}
+      aria-current={undefined}
+    >
+      {module.label}
+    </Link>
+  );
+}
 
     return (
       <button

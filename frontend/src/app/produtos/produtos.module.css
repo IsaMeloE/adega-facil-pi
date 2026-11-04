@@ -29,6 +29,7 @@
 .backLink {
   color: #842b43;
   font-weight: 600;
+  text-decoration: none;
 }
 
 .formCard,
@@ -64,16 +65,19 @@
   font-weight: 600;
 }
 
-.field input {
+.field input,
+.field select {
   min-height: 42px;
   padding: 8px 10px;
   border: 1px solid #b9bdc6;
   border-radius: 8px;
   color: #20171a;
+  background-color: #fff;
   font: inherit;
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   outline: 3px solid #ead0d8;
   border-color: #842b43;
 }
