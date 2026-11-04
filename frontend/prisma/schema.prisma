@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  category      String?
+  barcode       String?  @unique
+  salePrice     Decimal  @db.Decimal(10, 2)
+  minimumStock  Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  lots          Lot[]
+}
+
+model Lot {
+  id             String   @id @default(cuid())
+  productId      String
+  lotCode        String?
+  quantity       Int      @default(0)
+  unitCost       Decimal  @db.Decimal(10, 2)
+  expiresAt      DateTime? @db.Date
+  createdAt      DateTime @default(now())
+
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([productId, expiresAt])
+}
