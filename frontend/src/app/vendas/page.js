@@ -25,6 +25,10 @@ export default function VendasPage() {
   const [quantity, setQuantity] = useState("1");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDelivery, setIsDelivery] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState("0");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryNotes, setDeliveryNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -134,6 +138,20 @@ export default function VendasPage() {
       setError("Selecione o método de pagamento.");
       return;
     }
+
+    if (isDelivery && !deliveryAddress.trim()) {
+      setError("Informe o endereço da entrega.");
+      return;
+    }
+
+    if (
+      isDelivery &&
+      (!Number.isFinite(Number(deliveryFee)) || Number(deliveryFee) < 0)
+    ) {
+      setError("Informe uma taxa de entrega válida.");
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -142,7 +160,16 @@ export default function VendasPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ items: cart, paymentMethod }),
+        body: JSON.stringify({
+          items: cart,
+          paymentMethod,
+          delivery: {
+            isDelivery,
+            fee: isDelivery ? Number(deliveryFee || 0) : 0,
+            address: isDelivery ? deliveryAddress.trim() : "",
+            notes: isDelivery ? deliveryNotes.trim() : "",
+          },
+        }),
       });
 
       const result = await response.json();
@@ -152,6 +179,10 @@ export default function VendasPage() {
       }
 
       setCart([]);
+      setIsDelivery(false);
+      setDeliveryFee("0");
+      setDeliveryAddress("");
+      setDeliveryNotes("");
       setSuccess("Venda registrada com sucesso.");
       await atualizarDados();
     } catch (requestError) {
@@ -161,10 +192,22 @@ export default function VendasPage() {
     }
   }
 
-  const cartTotal = cart.reduce((total, item) => {
-    const product = products.find((current) => current.id === item.productId);
-    return total + Number(product?.salePrice || 0) * item.quantity;
+  const cartSubtotalCents = cart.reduce((total, item) => {
+    const product = products.find(
+      (current) => current.id === item.productId,
+    );
+    const unitPriceCents = Math.round(
+      Number(product?.salePrice || 0) * 100,
+    );
+
+    return total + unitPriceCents * item.quantity;
   }, 0);
+
+  const deliveryFeeCents = isDelivery
+    ? Math.round(Number(deliveryFee || 0) * 100)
+    : 0;
+
+  const cartTotal = (cartSubtotalCents + deliveryFeeCents) / 100;
 
   return (
     <main className={`${styles.container} ${styles.salesPage}`}>
@@ -316,6 +359,60 @@ export default function VendasPage() {
                     </select>
                   </div>
 
+                  <label className={styles.deliveryCheckbox}>
+                    <input
+                      type="checkbox"
+                      checked={isDelivery}
+                      onChange={(event) => setIsDelivery(event.target.checked)}
+                      disabled={isSaving}
+                    />
+                    <span>Esta venda terá entrega</span>
+                  </label>
+
+                  {isDelivery && (
+                    <div className={styles.deliveryFields}>
+                      <div className={styles.deliveryGrid}>
+                        <div className={styles.field}>
+                          <label htmlFor="deliveryFee">Taxa de entrega (R$)</label>
+                          <input
+                            id="deliveryFee"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={deliveryFee}
+                            onChange={(event) => setDeliveryFee(event.target.value)}
+                            disabled={isSaving}
+                          />
+                        </div>
+
+                        <div className={styles.field}>
+                          <label htmlFor="deliveryAddress">Endereço e referência</label>
+                          <input
+                            id="deliveryAddress"
+                            type="text"
+                            value={deliveryAddress}
+                            onChange={(event) => setDeliveryAddress(event.target.value)}
+                            placeholder="Rua, número e referência"
+                            maxLength={255}
+                            required
+                            disabled={isSaving}
+                          />
+                        </div>
+                      </div>
+
+                      <div className={styles.field}>
+                        <label htmlFor="deliveryNotes">Observação</label>
+                        <textarea
+                          id="deliveryNotes"
+                          value={deliveryNotes}
+                          onChange={(event) => setDeliveryNotes(event.target.value)}
+                          placeholder="Instruções para a entrega (opcional)"
+                          maxLength={500}
+                          disabled={isSaving}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   <div className={styles.checkoutSummary}>
                     <span>Total da venda</span>

@@ -471,3 +471,44 @@
     align-items: flex-start;
   }
 }
+
+.deliveryCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+  color: #20171a;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.deliveryCheckbox input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.deliveryFields {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.deliveryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.deliveryFields textarea {
+  min-height: 82px;
+  resize: vertical;
+}
+
+@media (max-width: 480px) {
+  .deliveryGrid {
+    grid-template-columns: 1fr;
+  }
+}

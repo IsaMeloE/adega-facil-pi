@@ -29,18 +29,59 @@ export async function POST(request) {
     const body = await request.json();
     const items = body.items;
     const paymentMethods = [
-  "PIX",
-  "DINHEIRO",
-  "CARTAO_DEBITO",
-  "CARTAO_CREDITO",
-];
+      "PIX",
+      "DINHEIRO",
+      "CARTAO_DEBITO",
+      "CARTAO_CREDITO",
+    ];
 
-if (!paymentMethods.includes(body.paymentMethod)) {
-  return NextResponse.json(
-    { error: "Selecione um método de pagamento válido." },
-    { status: 400 },
-  );
-}
+    const delivery = body.delivery ?? {};
+
+    if (typeof delivery !== "object" || Array.isArray(delivery)) {
+      return NextResponse.json(
+        { error: "Dados de entrega inválidos." },
+        { status: 400 },
+      );
+    }
+
+    const isDelivery = delivery.isDelivery ?? false;
+
+    if (typeof isDelivery !== "boolean") {
+      return NextResponse.json(
+        { error: "Informe se a venda terá entrega." },
+        { status: 400 },
+      );
+    }
+
+    let deliveryFeeCents = 0;
+    let deliveryAddress = null;
+    let deliveryNotes = null;
+
+    if (isDelivery) {
+      const fee = Number(delivery.fee);
+      const address =
+        typeof delivery.address === "string" ? delivery.address.trim() : "";
+      const notes =
+        typeof delivery.notes === "string" ? delivery.notes.trim() : "";
+
+      if (!Number.isFinite(fee) || fee < 0 || !address) {
+        return NextResponse.json(
+          { error: "Informe um endereço e uma taxa de entrega válida." },
+          { status: 400 },
+        );
+      }
+
+      deliveryFeeCents = Math.round(fee * 100);
+      deliveryAddress = address;
+      deliveryNotes = notes || null;
+    }
+
+    if (!paymentMethods.includes(body.paymentMethod)) {
+      return NextResponse.json(
+        { error: "Selecione um método de pagamento válido." },
+        { status: 400 },
+      );
+    }
 
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -75,7 +116,7 @@ if (!paymentMethods.includes(body.paymentMethod)) {
 
     const sale = await prisma.$transaction(
       async (tx) => {
-        let totalCents = 0;
+        let totalCents = deliveryFeeCents;
         const deductions = [];
         const saleItems = [];
 
@@ -164,11 +205,15 @@ if (!paymentMethods.includes(body.paymentMethod)) {
         }
 
         const createdSale = await tx.sale.create({
-  data: {
-    total: totalCents / 100,
-    paymentMethod: body.paymentMethod,
-  },
-});
+          data: {
+            total: totalCents / 100,
+            paymentMethod: body.paymentMethod,
+            isDelivery,
+            deliveryFee: deliveryFeeCents / 100,
+            deliveryAddress,
+            deliveryNotes,
+          },
+        });
 
         await tx.saleItem.createMany({
           data: saleItems.map((item) => ({
@@ -193,19 +238,19 @@ if (!paymentMethods.includes(body.paymentMethod)) {
     );
 
     return NextResponse.json(sale, { status: 201 });
-} catch (error) {
-  console.error("Erro ao registrar venda:", error);
+  } catch (error) {
+    console.error("Erro ao registrar venda:", error);
 
-  if (error.status) {
+    if (error.status) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
+    }
+
     return NextResponse.json(
-      { error: error.message },
-      { status: error.status },
+      { error: "Não foi possível registrar a venda." },
+      { status: 500 },
     );
   }
-
-  return NextResponse.json(
-    { error: "Não foi possível registrar a venda." },
-    { status: 500 },
-  );
-}
 }

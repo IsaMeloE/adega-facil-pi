@@ -38,11 +38,15 @@ model Lot {
 }
 
 model Sale {
-  id        String     @id @default(cuid())
-  total     Decimal    @db.Decimal(10, 2)
-  paymentMethod String?
-  createdAt DateTime   @default(now())
-  items     SaleItem[]
+  id              String     @id @default(cuid())
+  total           Decimal    @db.Decimal(10, 2)
+  paymentMethod   String?
+  isDelivery      Boolean    @default(false)
+  deliveryFee     Decimal    @default(0) @db.Decimal(10, 2)
+  deliveryAddress String?
+  deliveryNotes   String?
+  createdAt       DateTime   @default(now())
+  items           SaleItem[]
 }
 
 model SaleItem {
