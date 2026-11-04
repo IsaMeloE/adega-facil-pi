@@ -10,7 +10,7 @@ const formatarMoeda = (valor) =>
     currency: "BRL",
   });
 
-  const rotulosPagamento = {
+const rotulosPagamento = {
   PIX: "Pix",
   DINHEIRO: "Dinheiro",
   CARTAO_DEBITO: "Cartão de débito",
@@ -131,9 +131,9 @@ export default function VendasPage() {
     setError("");
     setSuccess("");
     if (!paymentMethod) {
-  setError("Selecione o método de pagamento.");
-  return;
-}
+      setError("Selecione o método de pagamento.");
+      return;
+    }
     setIsSaving(true);
 
     try {
@@ -167,208 +167,235 @@ export default function VendasPage() {
   }, 0);
 
   return (
-    <main className={styles.container}>
-      <header className={styles.header}>
+    <main className={`${styles.container} ${styles.salesPage}`}>
+      <header className={`${styles.header} ${styles.salesHeader}`}>
         <div>
-          <p className={styles.eyebrow}>GESTÃO DE BEBIDAS</p>
           <h1>Vendas</h1>
+          <p className={styles.salesSubtitle}>
+            Registre vendas e acompanhe o histórico.
+          </p>
         </div>
 
-        <Link className={styles.backLink} href="/">
-          Voltar ao painel
-        </Link>
+        <div className={styles.userInfo}>
+          <span className={styles.userAvatar}>AD</span>
+          <div>
+            <strong>Administrador</strong>
+            <small>Administrador</small>
+          </div>
+        </div>
       </header>
 
-      <section className={styles.formCard} aria-labelledby="item-title">
-        <h2 id="item-title">Adicionar produto à venda</h2>
+      <div className={styles.salesLayout}>
+        <div className={styles.checkoutColumn}>
 
-        {isLoading ? (
-          <p role="status">Carregando produtos...</p>
-        ) : (
-          <form className={styles.form} onSubmit={adicionarAoCarrinho}>
-            <div className={styles.field}>
-              <label htmlFor="productId">Produto</label>
-              <select
-                id="productId"
-                value={productId}
-                onChange={(event) => setProductId(event.target.value)}
-                required
-              >
-                <option value="">Selecione um produto</option>
-                {products
-                  .filter((product) => product.isActive)
-                  .map((product) => {
-                    const stock = (product.lots || []).reduce(
-                      (total, lot) => total + lot.quantity,
-                      0,
-                    );
+          <section
+            className={`${styles.formCard} ${styles.checkoutPanel}`}
+            aria-labelledby="item-title"
+          >
+            <h2 id="item-title">Nova venda</h2>
 
-                    return (
-                      <option
-                        key={product.id}
-                        value={product.id}
-                        disabled={stock === 0}
-                      >
-                        {product.name} — {stock} em estoque
-                      </option>
-                    );
-                  })}
-              </select>
-            </div>
+            {isLoading ? (
+              <p role="status">Carregando produtos...</p>
+            ) : (
+              <form className={styles.form} onSubmit={adicionarAoCarrinho}>
+                <div className={styles.field}>
+                  <label htmlFor="productId">Produto</label>
+                  <select
+                    id="productId"
+                    value={productId}
+                    onChange={(event) => setProductId(event.target.value)}
+                    required
+                  >
+                    <option value="">Selecione um produto</option>
+                    {products
+                      .filter((product) => product.isActive)
+                      .map((product) => {
+                        const stock = (product.lots || []).reduce(
+                          (total, lot) => total + lot.quantity,
+                          0,
+                        );
 
-            <div className={styles.field}>
-              <label htmlFor="quantity">Quantidade</label>
-              <input
-                id="quantity"
-                type="number"
-                min="1"
-                step="1"
-                value={quantity}
-                onChange={(event) => setQuantity(event.target.value)}
-                required
-              />
-            </div>
+                        return (
+                          <option
+                            key={product.id}
+                            value={product.id}
+                            disabled={stock === 0}
+                          >
+                            {product.name} — {stock} em estoque
+                          </option>
+                        );
+                      })}
+                  </select>
+                </div>
 
-            <button className={styles.button} type="submit">
-              Adicionar ao carrinho
-            </button>
-          </form>
-        )}
-      </section>
+                <div className={styles.field}>
+                  <label htmlFor="quantity">Quantidade</label>
+                  <input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={quantity}
+                    onChange={(event) => setQuantity(event.target.value)}
+                    required
+                  />
+                </div>
 
-      <section className={styles.listCard} aria-labelledby="cart-title">
-        <h2 id="cart-title">Itens da venda</h2>
+                <button className={styles.button} type="submit">
+                  Adicionar ao carrinho
+                </button>
+              </form>
+            )}
 
-        {cart.length === 0 ? (
-          <p>Nenhum produto adicionado.</p>
-        ) : (
-          <>
-            <div className={styles.tableWrapper}>
-              <table>
-                <caption className={styles.srOnly}>
-                  Produtos, quantidades e valores desta venda
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Produto</th>
-                    <th scope="col">Quantidade</th>
-                    <th scope="col">Preço unitário</th>
-                    <th scope="col">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cart.map((item) => {
-                    const product = products.find(
-                      (current) => current.id === item.productId,
-                    );
-                    const unitPrice = Number(product?.salePrice || 0);
+            <section className={styles.cartSection} aria-labelledby="cart-title">
+              <h2 id="cart-title">Itens da venda</h2>
+              {cart.length === 0 ? (
+                <p>Nenhum produto adicionado.</p>
+              ) : (
+                <>
 
-                    return (
-                      <tr key={item.productId}>
-                        <th scope="row">{product?.name}</th>
-                        <td>{item.quantity}</td>
-                        <td>{formatarMoeda(unitPrice)}</td>
-                        <td>{formatarMoeda(unitPrice * item.quantity)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                  <div className={styles.cartItems}>
+                    {cart.map((item) => {
+                      const product = products.find(
+                        (current) => current.id === item.productId,
+                      );
+                      const unitPrice = Number(product?.salePrice || 0);
 
-            <p>
-              <strong>Total: {formatarMoeda(cartTotal)}</strong>
+                      return (
+                        <article key={item.productId} className={styles.cartItem}>
+                          <div className={styles.cartItemInfo}>
+                            <strong className={styles.cartItemName}>
+                              {product?.name || "Produto indisponível"}
+                            </strong>
+                            <span className={styles.cartItemMeta}>
+                              {item.quantity} {item.quantity === 1 ? "unidade" : "unidades"}
+                              {" • "}
+                              {formatarMoeda(unitPrice)} cada
+                            </span>
+                          </div>
+
+                          <div className={styles.cartItemEnd}>
+                            <strong className={styles.cartItemSubtotal}>
+                              {formatarMoeda(unitPrice * item.quantity)}
+                            </strong>
+                            <button
+                              className={styles.removeCartItem}
+                              type="button"
+                              aria-label={`Remover ${product?.name || "produto"} do carrinho`}
+                              onClick={() =>
+                                setCart((currentCart) =>
+                                  currentCart.filter(
+                                    (current) => current.productId !== item.productId,
+                                  ),
+                                )
+                              }
+                              disabled={isSaving}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+
+                  <div className={`${styles.field} ${styles.paymentField}`}>
+
+                    <label htmlFor="paymentMethod">Método de pagamento</label>
+                    <select
+                      id="paymentMethod"
+                      value={paymentMethod}
+                      onChange={(event) => setPaymentMethod(event.target.value)}
+                      disabled={isSaving}
+                    >
+                      <option value="">Selecione uma opção</option>
+                      <option value="PIX">Pix</option>
+                      <option value="DINHEIRO">Dinheiro</option>
+                      <option value="CARTAO_DEBITO">Cartão de débito</option>
+                      <option value="CARTAO_CREDITO">Cartão de crédito</option>
+                    </select>
+                  </div>
+
+
+                  <div className={styles.checkoutSummary}>
+                    <span>Total da venda</span>
+                    <strong>{formatarMoeda(cartTotal)}</strong>
+                    <small>{cart.length} item(ns) no carrinho</small>
+                  </div>
+
+                  <button
+                    className={styles.button}
+                    type="button"
+                    onClick={finalizarVenda}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? "Registrando venda..." : "Finalizar venda"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCart([])}
+                    disabled={isSaving}
+                    className={styles.secondaryButton}
+                  >
+                    Limpar venda
+                  </button>
+                </>
+              )}
+            </section>
+          </section>
+
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
             </p>
+          )}
 
-            <div className={styles.field}>
+          {success && (
+            <p className={styles.success} role="status">
+              {success}
+            </p>
+          )}
 
-  <label htmlFor="paymentMethod">Método de pagamento</label>
-  <select
-    id="paymentMethod"
-    value={paymentMethod}
-    onChange={(event) => setPaymentMethod(event.target.value)}
-    disabled={isSaving}
-  >
-    <option value="">Selecione uma opção</option>
-    <option value="PIX">Pix</option>
-    <option value="DINHEIRO">Dinheiro</option>
-    <option value="CARTAO_DEBITO">Cartão de débito</option>
-    <option value="CARTAO_CREDITO">Cartão de crédito</option>
-  </select>
-</div>
+        </div>
 
-            <button
-              className={styles.button}
-              type="button"
-              onClick={finalizarVenda}
-              disabled={isSaving}
-            >
-              {isSaving ? "Registrando venda..." : "Finalizar venda"}
-            </button>
+        <section
+          className={`${styles.listCard} ${styles.salesHistory}`}
+          aria-labelledby="sales-title"
+        >
 
-            <button
-              type="button"
-              onClick={() => setCart([])}
-              disabled={isSaving}
-            >
-              Limpar venda
-            </button>
-          </>
-        )}
-      </section>
+          <section className={styles.listCard} aria-labelledby="sales-title">
+            <div className={styles.historyHeader}>
+              <p className={styles.eyebrow}>HISTÓRICO</p>
+              <h2 id="sales-title">Vendas</h2>
+            </div>
 
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
-
-      {success && (
-        <p className={styles.success} role="status">
-          {success}
-        </p>
-      )}
-
-      <section className={styles.listCard} aria-labelledby="sales-title">
-        <h2 id="sales-title">Vendas recentes</h2>
-
-        {sales.length === 0 ? (
-          <p>Nenhuma venda registrada.</p>
-        ) : (
-          <div className={styles.tableWrapper}>
-            <table>
-              <caption className={styles.srOnly}>
-                Vendas recentes, datas, itens e totais
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Data</th>
-                  <th scope="col">Itens</th>
-                  <th scope="col">Pagamento</th>
-                  <th scope="col">Total</th>
-                </tr>
-              </thead>
-              <tbody>
+            {sales.length === 0 ? (
+              <p>Nenhuma venda registrada.</p>
+            ) : (
+              <div className={styles.salesList}>
                 {sales.map((sale) => (
-                  <tr key={sale.id}>
-                    <td>{new Date(sale.createdAt).toLocaleString("pt-BR")}</td>
-                    <td>
-                      {sale.items
-                        .map(
-                          (item) =>
-                            `${item.product.name} × ${item.quantity}`,
-                        )
-                        .join(", ")}
-                    </td>
-                    <td>{rotulosPagamento[sale.paymentMethod] || "Não informado"}</td>
-                    <td>{formatarMoeda(sale.total)}</td>
-                  </tr>
+                  <article key={sale.id} className={styles.saleRow}>
+                    <div className={styles.saleDetails}>
+                      <strong>
+                        {new Date(sale.createdAt).toLocaleString("pt-BR")} ·{" "}
+                        {formatarMoeda(sale.total)}
+                      </strong>
+                      <span>
+                        {sale.items
+                          .map((item) => `${item.product.name} × ${item.quantity}`)
+                          .join(", ")}{" "}
+                        · {rotulosPagamento[sale.paymentMethod] || "Pagamento não informado"}
+                      </span>
+                    </div>
+                    <span className={styles.saleStatus}>Registrada</span>
+                  </article>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+              </div>
+            )}
+          </section>
+        </section>
+      </div>
     </main>
   );
 }
