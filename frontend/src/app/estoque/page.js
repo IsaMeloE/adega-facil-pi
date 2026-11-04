@@ -233,7 +233,7 @@ export default function EstoquePage() {
           </div>
 
           <button className={styles.button} type="submit" disabled={isSaving}>
-            {isSaving ? "Salvando..." : "Adicionar lote"}
+            {isSaving ? "Salvando..." : "Registrar Entrada"}
           </button>
         </form>
 

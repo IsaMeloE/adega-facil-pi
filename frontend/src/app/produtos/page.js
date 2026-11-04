@@ -186,12 +186,23 @@ export default function ProdutosPage() {
 
           <div className={styles.field}>
             <label htmlFor="category">Categoria</label>
-            <input
+            <select
               id="category"
               name="category"
               value={form.category}
               onChange={atualizarCampo}
-            />
+              required
+            >
+              <option value="">Selecione uma categoria</option>
+              <option value="Cervejas">Cervejas</option>
+              <option value="Refrigerantes">Refrigerantes</option>
+              <option value="Águas">Águas</option>
+              <option value="Sucos">Sucos</option>
+              <option value="Energéticos">Energéticos</option>
+              <option value="Vinhos">Vinhos</option>
+              <option value="Destilados">Destilados</option>
+              <option value="Outros">Outros</option>
+            </select>
           </div>
 
           <div className={styles.field}>
