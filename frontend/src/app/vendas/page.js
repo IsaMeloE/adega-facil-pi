@@ -10,6 +10,7 @@ const formatarMoeda = (valor) =>
   });
 
 const rotulosPagamento = {
+  FIADO: "Fiado",
   PIX: "Pix",
   DINHEIRO: "Dinheiro",
   CARTAO_DEBITO: "Cartão de débito",
@@ -41,6 +42,8 @@ export default function VendasPage() {
   const [deliveryFee, setDeliveryFee] = useState("0");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryNotes, setDeliveryNotes] = useState("");
+  const [customers, setCustomers] = useState([]);
+  const [customerId, setCustomerId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -51,19 +54,26 @@ export default function VendasPage() {
     Promise.all([
       fetch("/api/products", { signal: controller.signal }),
       fetch("/api/sales", { signal: controller.signal }),
+      fetch("/api/customers", { signal: controller.signal }),
     ])
-      .then(async ([productsResponse, salesResponse]) => {
-        if (!productsResponse.ok || !salesResponse.ok) {
+      .then(async ([productsResponse, salesResponse, customersResponse]) => {
+        if (
+          !productsResponse.ok ||
+          !salesResponse.ok ||
+          !customersResponse.ok
+        ) {
           throw new Error("Não foi possível carregar os dados da tela.");
         }
 
-        const [productsData, salesData] = await Promise.all([
+        const [productsData, salesData, customersData] = await Promise.all([
           productsResponse.json(),
           salesResponse.json(),
+          customersResponse.json(),
         ]);
 
         setProducts(productsData);
         setSales(salesData);
+        setCustomers(customersData);
       })
       .catch((requestError) => {
         if (requestError.name !== "AbortError") {
@@ -77,6 +87,26 @@ export default function VendasPage() {
       });
 
     return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    async function refreshCustomers() {
+      try {
+        const response = await fetch("/api/customers");
+
+        if (response.ok) {
+          setCustomers(await response.json());
+        }
+      } catch (requestError) {
+        console.error("Não foi possível atualizar os clientes:", requestError);
+      }
+    }
+
+    window.addEventListener("focus", refreshCustomers);
+
+    return () => {
+      window.removeEventListener("focus", refreshCustomers);
+    };
   }, []);
 
   function adicionarAoCarrinho(event) {
@@ -151,6 +181,11 @@ export default function VendasPage() {
       return;
     }
 
+    if (paymentMethod === "FIADO" && !customerId) {
+      setError("Selecione um cliente para registrar a venda fiada.");
+      return;
+    }
+
     if (isDelivery && !deliveryAddress.trim()) {
       setError("Informe o endereço da entrega.");
       return;
@@ -174,6 +209,7 @@ export default function VendasPage() {
         },
         body: JSON.stringify({
           items: cart,
+          customerId: paymentMethod === "FIADO" ? customerId : null,
           paymentMethod,
           delivery: {
             isDelivery,
@@ -191,6 +227,8 @@ export default function VendasPage() {
       }
 
       setCart([]);
+      setCustomerId("");
+      setPaymentMethod("");
       setIsDelivery(false);
       setDeliveryFee("0");
       setDeliveryAddress("");
@@ -262,13 +300,13 @@ export default function VendasPage() {
                     required
                   >
                     <option value="">Selecione um produto</option>
+
                     {products
                       .filter((product) => product.isActive)
                       .map((product) => {
-                        const stock = (product.lots || []).filter(loteDentroDaValidade).reduce(
-                          (total, lot) => total + lot.quantity,
-                          0,
-                        );
+                        const stock = (product.lots || [])
+                          .filter(loteDentroDaValidade)
+                          .reduce((total, lot) => total + lot.quantity, 0);
 
                         return (
                           <option
@@ -364,12 +402,49 @@ export default function VendasPage() {
                       disabled={isSaving}
                     >
                       <option value="">Selecione uma opção</option>
+                      <option value="FIADO">Fiado</option>
                       <option value="PIX">Pix</option>
                       <option value="DINHEIRO">Dinheiro</option>
                       <option value="CARTAO_DEBITO">Cartão de débito</option>
                       <option value="CARTAO_CREDITO">Cartão de crédito</option>
                     </select>
                   </div>
+
+                  {paymentMethod === "FIADO" && (
+                    <div className={styles.field}>
+                      <label htmlFor="customerId">Cliente</label>
+                      <select
+                        id="customerId"
+                        value={customerId}
+                        onChange={(event) => {
+                          const selectedCustomerId = event.target.value;
+
+                          if (selectedCustomerId === "__add_customer__") {
+                            window.open(
+                              "/fiados?novoCliente=1",
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
+                            return;
+                          }
+
+                          setCustomerId(selectedCustomerId);
+                        }}
+                        required
+                        disabled={isSaving}
+                      >
+                        <option value="">Selecione um cliente</option>
+
+                        {customers.map((customer) => (
+                          <option key={customer.id} value={customer.id}>
+                            {customer.name}
+                          </option>
+                        ))}
+
+                        <option value="__add_customer__">+ Adicionar cliente</option>
+                      </select>
+                    </div>
+                  )}
 
                   <label className={styles.deliveryCheckbox}>
                     <input

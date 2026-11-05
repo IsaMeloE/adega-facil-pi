@@ -28,7 +28,10 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const items = body.items;
+    const customerId =
+      typeof body.customerId === "string" ? body.customerId.trim() : "";
     const paymentMethods = [
+      "FIADO",
       "PIX",
       "DINHEIRO",
       "CARTAO_DEBITO",
@@ -83,6 +86,13 @@ export async function POST(request) {
       );
     }
 
+    if (body.paymentMethod === "FIADO" && !customerId) {
+      return NextResponse.json(
+        { error: "Selecione um cliente para registrar a venda fiada." },
+        { status: 400 },
+      );
+    }
+
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
         { error: "Informe pelo menos um produto para a venda." },
@@ -122,6 +132,18 @@ export async function POST(request) {
         let totalCents = deliveryFeeCents;
         const deductions = [];
         const saleItems = [];
+
+        if (body.paymentMethod === "FIADO") {
+          const customer = await tx.customer.findUnique({
+            where: { id: customerId },
+          });
+
+          if (!customer || !customer.isActive) {
+            throw Object.assign(new Error("Cliente não encontrado ou inativo."), {
+              status: 404,
+            });
+          }
+        }
 
         for (const item of items) {
           const product = await tx.product.findUnique({
@@ -217,6 +239,7 @@ export async function POST(request) {
             deliveryFee: deliveryFeeCents / 100,
             deliveryAddress,
             deliveryNotes,
+            customerId: body.paymentMethod === "FIADO" ? customerId : null,
           },
         });
 
@@ -226,6 +249,17 @@ export async function POST(request) {
             saleId: createdSale.id,
           })),
         });
+
+        if (body.paymentMethod === "FIADO") {
+          await tx.creditMovement.create({
+            data: {
+              customerId,
+              saleId: createdSale.id,
+              type: "CHARGE",
+              amount: totalCents / 100,
+            },
+          });
+        }
 
         return tx.sale.findUnique({
           where: { id: createdSale.id },
