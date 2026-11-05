@@ -157,6 +157,11 @@ export async function POST(request) {
                     { expiresAt: { gte: inicioDoDia } },
                   ],
                 },
+                orderBy: [
+                  { expiresAt: { sort: "asc", nulls: "last"} },
+                  { createdAt: "asc" },
+                ],
+                
               },
             },
           });
