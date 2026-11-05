@@ -10,6 +10,7 @@ const modules = [
   { id: "estoque", label: "Estoque", href: "/estoque" },
   { id: "fiados", label: "Fiados", href: "/fiados" },
   { id: "entregas", label: "Entregas", href: "/entregas" },
+  { id: "relatorios", label: "Relatórios", href: "/relatorios" },
 ];
 
 export default function AppShell({ children }) {
