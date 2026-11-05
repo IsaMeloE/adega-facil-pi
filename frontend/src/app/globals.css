@@ -58,6 +58,11 @@ textarea {
   padding: 24px 16px;
   background: var(--sidebar);
   color: white;
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .brand {
@@ -96,6 +101,7 @@ textarea {
 }
 
 .nav-item {
+  font-size: 12px;
   min-height: 42px;
   padding: 0 12px;
   border: 0;
@@ -148,7 +154,7 @@ textarea {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
 }
@@ -203,6 +209,9 @@ textarea {
 
   .sidebar {
     padding: 14px;
+    position: static;
+height: auto;
+overflow: visible;
   }
 
   .brand {
@@ -237,4 +246,57 @@ textarea {
   color: inherit;
   text-decoration: none;
   font: inherit;
+}
+
+.dashboard-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.dashboard-row-content {
+  min-width: 0;
+}
+
+.dashboard-row-content strong,
+.dashboard-row-content span {
+  display: block;
+}
+
+.dashboard-row-content span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dashboard-status {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #fff4e5;
+  color: #8a5a00;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dashboard-status-paid {
+  background: #eaf7ef;
+  color: #267344;
+}
+
+.dashboard-error {
+  margin: 0 0 16px;
+  color: #b42318;
 }
