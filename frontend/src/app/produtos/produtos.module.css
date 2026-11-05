@@ -764,3 +764,79 @@
     flex-direction: column;
   }
 }
+
+.userSubmit {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.userActions {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.userActions summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+  list-style: none;
+}
+
+.userActions summary::-webkit-details-marker {
+  display: none;
+}
+
+.userActions summary::before {
+  content: "+ ";
+}
+
+.userActions details[open] summary::before {
+  content: "− ";
+}
+
+.pinResetForm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pinResetForm input {
+  width: 120px;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.userActionButton {
+  width: auto;
+  min-height: 36px;
+  margin: 0;
+  padding: 7px 12px;
+  border: 1px solid #e0e2e7;
+  border-radius: 8px;
+  background: #f5f6f8;
+  color: #3f3f46;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.userActionButton:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.pinResetForm input {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}

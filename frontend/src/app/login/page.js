@@ -116,7 +116,7 @@ export default function LoginPage() {
             </div>
 
             <div className={styles.field}>
-              <label htmlFor="pin">PIN de 6 dígitos</label>
+              <label htmlFor="pin">PIN</label>
               <input
                 id="pin"
                 type="password"

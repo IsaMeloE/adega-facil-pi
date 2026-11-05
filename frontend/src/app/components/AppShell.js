@@ -12,6 +12,7 @@ const modules = [
   { id: "fiados", label: "Fiados", href: "/fiados" },
   { id: "entregas", label: "Entregas", href: "/entregas" },
   { id: "relatorios", label: "Relatórios", href: "/relatorios" },
+  { id: "usuarios", label: "Usuários", href: "/usuarios" },
 ];
 
 export default function AppShell({ children }) {
@@ -75,6 +76,10 @@ export default function AppShell({ children }) {
     );
   }
 
+  const visibleModules = modules.filter(
+    (module) => module.id !== "usuarios" || user?.role === "ADMIN",
+  );
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -87,7 +92,7 @@ export default function AppShell({ children }) {
         </div>
 
         <nav aria-label="Navegação principal" className="nav-list">
-          {modules.map((module) => {
+          {visibleModules.map((module) => {
             const isActive = pathname === module.href;
 
             return (
