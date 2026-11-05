@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styles from "./produtos.module.css";
+import UserBadge from "../components/UserBadge";
 
 const formInicial = {
   name: "",
@@ -154,11 +155,7 @@ export default function ProdutosPage() {
         </div>
 
         <div className={styles.userInfo}>
-          <span className={styles.userAvatar}>AD</span>
-          <div>
-            <strong>Administrador</strong>
-            <small>Administrador</small>
-          </div>
+          <UserBadge />
         </div>
 
       </header>

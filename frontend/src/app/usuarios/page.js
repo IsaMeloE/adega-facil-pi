@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import styles from "../produtos/produtos.module.css";
+import UserBadge from "../components/UserBadge";
 
 function getErrorMessage(result, fallback) {
     return result.error || fallback;
@@ -147,11 +148,7 @@ export default function UsuariosPage() {
                 </div>
 
                 <div className={styles.userInfo}>
-                    <span className={styles.userAvatar}>AD</span>
-                    <div>
-                        <strong>Administrador</strong>
-                        <small>Administrador</small>
-                    </div>
+                    <UserBadge />
                 </div>
             </header>
 

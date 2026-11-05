@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import styles from "../produtos/produtos.module.css";
+import UserBadge from "../components/UserBadge";
 
 const statusLabels = {
   PENDING: "Pendente",
@@ -103,11 +104,7 @@ export default function EntregasPage() {
         </div>
 
         <div className={styles.userInfo}>
-          <span className={styles.userAvatar}>AD</span>
-          <div>
-            <strong>Administrador</strong>
-            <small>Administrador</small>
-          </div>
+          <UserBadge />
         </div>
       </header>
 

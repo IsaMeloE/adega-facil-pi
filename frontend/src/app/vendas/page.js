@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styles from "../produtos/produtos.module.css";
+import UserBadge from "../components/UserBadge";
 
 const formatarMoeda = (valor) =>
   Number(valor || 0).toLocaleString("pt-BR", {
@@ -270,11 +271,7 @@ export default function VendasPage() {
         </div>
 
         <div className={styles.userInfo}>
-          <span className={styles.userAvatar}>AD</span>
-          <div>
-            <strong>Administrador</strong>
-            <small>Administrador</small>
-          </div>
+          <UserBadge />
         </div>
       </header>
 

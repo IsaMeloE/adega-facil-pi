@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+
+export const AuthUserContext = createContext(null);
+
+export function useAuthUser() {
+  return useContext(AuthUserContext);
+}
 
 const modules = [
   { id: "painel", label: "Painel", href: "/" },
@@ -81,6 +87,8 @@ export default function AppShell({ children }) {
   );
 
   return (
+    <AuthUserContext.Provider value={user}>
+
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
@@ -120,5 +128,6 @@ export default function AppShell({ children }) {
 
       <div className="content">{children}</div>
     </div>
+    </AuthUserContext.Provider>
   );
 }

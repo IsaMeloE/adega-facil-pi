@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import styles from "../produtos/produtos.module.css";
+import UserBadge from "../components/UserBadge";
 
 const paymentLabels = {
     PIX: "Pix",
@@ -190,11 +191,7 @@ export default function FiadosPage() {
                 </div>
 
                 <div className={styles.userInfo}>
-                    <span className={styles.userAvatar}>AD</span>
-                    <div>
-                        <strong>Administrador</strong>
-                        <small>Administrador</small>
-                    </div>
+                    <UserBadge />
                 </div>
             </header>
 
