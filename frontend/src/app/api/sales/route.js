@@ -236,6 +236,7 @@ export async function POST(request) {
             total: totalCents / 100,
             paymentMethod: body.paymentMethod,
             isDelivery,
+            deliveryStatus: isDelivery ? "PENDING" : null,
             deliveryFee: deliveryFeeCents / 100,
             deliveryAddress,
             deliveryNotes,

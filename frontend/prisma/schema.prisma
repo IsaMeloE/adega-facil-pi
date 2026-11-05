@@ -42,6 +42,7 @@ model Sale {
   total           Decimal         @db.Decimal(10, 2)
   paymentMethod   String?
   isDelivery      Boolean         @default(false)
+  deliveryStatus  DeliveryStatus?
   deliveryFee     Decimal         @default(0) @db.Decimal(10, 2)
   deliveryAddress String?
   deliveryNotes   String?
@@ -73,6 +74,12 @@ model SaleItem {
 enum CreditMovementType {
   CHARGE
   PAYMENT
+}
+
+enum DeliveryStatus {
+  PENDING
+  IN_ROUTE
+  DELIVERED
 }
 
 model Customer {
