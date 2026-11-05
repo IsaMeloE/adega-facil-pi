@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 const paymentMethods = [
   "PIX",
@@ -14,6 +15,15 @@ function toCents(value) {
 
 export async function GET() {
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return Response.json(
+        { error: "Acesso não autorizado." },
+        { status: 401 },
+      );
+    }
+
     const customers = await prisma.customer.findMany({
       orderBy: { name: "asc" },
       select: {
@@ -91,6 +101,15 @@ export async function POST(request) {
   let body;
 
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return Response.json(
+        { error: "Acesso não autorizado." },
+        { status: 401 },
+      );
+    }
+
     body = await request.json();
   } catch {
     return NextResponse.json(

@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const modules = [
   { id: "painel", label: "Painel", href: "/" },
@@ -15,6 +16,64 @@ const modules = [
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
+
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    if (pathname === "/login") return;
+
+    let isActive = true;
+
+    async function checkSession() {
+      try {
+        const response = await fetch("/api/auth/session", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          router.replace("/login");
+          return;
+        }
+
+        const result = await response.json();
+
+        if (isActive) {
+          setUser(result.user);
+          setIsAuthorized(true);
+        }
+      } catch {
+        router.replace("/login");
+      }
+    }
+
+    checkSession();
+
+    return () => {
+      isActive = false;
+    };
+  }, [pathname, router]);
+
+  async function logout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      window.location.replace("/login");
+    }
+  }
+
+  if (pathname === "/login") {
+    return children;
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="content">
+        <p role="status">Verificando acesso...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
@@ -43,6 +102,15 @@ export default function AppShell({ children }) {
             );
           })}
         </nav>
+
+        <button
+          className="nav-item sidebar-logout"
+          type="button"
+          onClick={logout}
+          aria-label={`Sair da conta de ${user?.name || "usuário"}`}
+        >
+          Sair
+        </button>
       </aside>
 
       <div className="content">{children}</div>

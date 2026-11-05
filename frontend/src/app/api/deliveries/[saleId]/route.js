@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function PATCH(_request, context) {
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return Response.json(
+        { error: "Acesso não autorizado." },
+        { status: 401 },
+      );
+    }
+
     const { saleId } = await context.params;
 
     const sale = await prisma.sale.findUnique({

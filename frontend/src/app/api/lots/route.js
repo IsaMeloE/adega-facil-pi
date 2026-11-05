@@ -1,7 +1,17 @@
 import prisma from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return Response.json(
+        { error: "Acesso não autorizado." },
+        { status: 401 },
+      );
+    }
+
     const lots = await prisma.lot.findMany({
       include: {
         product: {
@@ -25,6 +35,15 @@ export async function POST(request) {
   let body;
 
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return Response.json(
+        { error: "Acesso não autorizado." },
+        { status: 401 },
+      );
+    }
+
     body = await request.json();
   } catch {
     return Response.json(

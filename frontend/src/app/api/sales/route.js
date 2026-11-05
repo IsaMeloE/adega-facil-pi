@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: "Acesso não autorizado." },
+        { status: 401 },
+      );
+    }
+
     const sales = await prisma.sale.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -26,6 +36,15 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: "Acesso não autorizado." },
+        { status: 401 },
+      );
+    }
+
     const body = await request.json();
     const items = body.items;
     const customerId =
@@ -158,10 +177,10 @@ export async function POST(request) {
                   ],
                 },
                 orderBy: [
-                  { expiresAt: { sort: "asc", nulls: "last"} },
+                  { expiresAt: { sort: "asc", nulls: "last" } },
                   { createdAt: "asc" },
                 ],
-                
+
               },
             },
           });
@@ -246,6 +265,7 @@ export async function POST(request) {
             deliveryAddress,
             deliveryNotes,
             customerId: body.paymentMethod === "FIADO" ? customerId : null,
+            createdByUserId: currentUser.id,
           },
         });
 

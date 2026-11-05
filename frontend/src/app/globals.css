@@ -300,3 +300,19 @@ overflow: visible;
   margin: 0 0 16px;
   color: #b42318;
 }
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-logout {
+  width: 100%;
+  margin-top: auto;
+}
+
+@media (max-width: 620px) {
+  .sidebar-logout {
+    margin-top: 12px;
+  }
+}
