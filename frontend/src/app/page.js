@@ -33,6 +33,7 @@ function validityStatus(expiresAt, today, limit) {
 export default function Home() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
+  const [creditBalance, setCreditBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -41,22 +42,31 @@ export default function Home() {
 
     async function loadDashboard() {
       try {
-        const [salesResponse, productsResponse] = await Promise.all([
-          fetch("/api/sales", { signal: controller.signal }),
-          fetch("/api/products", { signal: controller.signal }),
-        ]);
+        const [salesResponse, productsResponse, creditsResponse] =
+          await Promise.all([
+            fetch("/api/sales", { signal: controller.signal }),
+            fetch("/api/products", { signal: controller.signal }),
+            fetch("/api/credits", { signal: controller.signal }),
+          ]);
 
-        if (!salesResponse.ok || !productsResponse.ok) {
+        if (
+          !salesResponse.ok ||
+          !productsResponse.ok ||
+          !creditsResponse.ok
+        ) {
           throw new Error("Não foi possível carregar os dados do painel.");
         }
 
-        const [salesData, productsData] = await Promise.all([
+        const [salesData, productsData, creditsData] = await Promise.all([
           salesResponse.json(),
           productsResponse.json(),
+          creditsResponse.json(),
         ]);
 
         setSales(salesData);
         setProducts(productsData);
+        setCreditBalance(Number(creditsData.totalOpenBalance || 0));
+
       } catch (requestError) {
         if (requestError.name !== "AbortError") {
           setError(requestError.message);
@@ -134,10 +144,10 @@ export default function Home() {
         `${lot.quantity} un.`,
         lot.expiresAt
           ? `Validade ${String(lot.expiresAt)
-              .slice(0, 10)
-              .split("-")
-              .reverse()
-              .join("/")}`
+            .slice(0, 10)
+            .split("-")
+            .reverse()
+            .join("/")}`
           : null,
       ]
         .filter(Boolean)
@@ -153,6 +163,10 @@ export default function Home() {
   ].slice(0, 6);
 
   const latestSales = sales.slice(0, 3);
+
+  const pendingDeliveries = sales.filter(
+    (sale) => sale.isDelivery && sale.deliveryStatus !== "DELIVERED",
+  ).length;
 
   return (
     <>
@@ -180,9 +194,8 @@ export default function Home() {
           <small>
             {isLoading
               ? "Carregando..."
-              : `${todaySales.length} ${
-                  todaySales.length === 1 ? "venda" : "vendas"
-                }`}
+              : `${todaySales.length} ${todaySales.length === 1 ? "venda" : "vendas"
+              }`}
           </small>
         </article>
 
@@ -191,11 +204,25 @@ export default function Home() {
           <strong>{isLoading ? "—" : `${lowStockProducts.length} itens`}</strong>
           <small>Produtos no mínimo ou abaixo dele</small>
         </article>
+
+        <article className="summary-card">
+          <span>Fiados em aberto</span>
+          <strong>
+            {isLoading ? "—" : formatCurrency(creditBalance)}
+          </strong>
+          <small>Saldo total a receber</small>
+        </article>
+
+        <article className="summary-card">
+          <span>Entregas pendentes</span>
+          <strong>{isLoading ? "—" : pendingDeliveries}</strong>
+          <small>Aguardando conclusão</small>
+        </article>
       </section>
 
       <section className="panel-grid">
         <article className="panel">
-  
+
           <h2>Validade e estoque</h2>
 
           {isLoading ? (
@@ -237,11 +264,11 @@ export default function Home() {
 
                 const saleDate = sale.createdAt
                   ? new Date(sale.createdAt).toLocaleString("pt-BR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
+                    day: "2-digit",
+                    month: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                   : "";
 
                 return (
