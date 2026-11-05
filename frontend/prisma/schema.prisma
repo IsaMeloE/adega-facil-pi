@@ -51,6 +51,8 @@ model Sale {
   customerId      String?
   customer        Customer?       @relation(fields: [customerId], references: [id], onDelete: Restrict)
   creditMovement  CreditMovement?
+  createdByUserId String?
+  createdByUser   User?           @relation("SaleCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
 }
 
 model SaleItem {
@@ -82,6 +84,11 @@ enum DeliveryStatus {
   DELIVERED
 }
 
+enum UserRole {
+  ADMIN
+  OPERATOR
+}
+
 model Customer {
   id              String           @id @default(cuid())
   name            String
@@ -107,4 +114,31 @@ model CreditMovement {
   sale     Sale?    @relation(fields: [saleId], references: [id], onDelete: Restrict)
 
   @@index([customerId, createdAt])
+}
+
+model User {
+  id                String        @id @default(cuid())
+  name              String
+  pinHash           String
+  role              UserRole      @default(OPERATOR)
+  isActive          Boolean       @default(true)
+  failedPinAttempts Int           @default(0)
+  lockedUntil       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  sales             Sale[]        @relation("SaleCreator")
+  sessions          UserSession[]
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
