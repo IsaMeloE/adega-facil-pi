@@ -19,6 +19,7 @@ export async function PATCH(_request, context) {
       where: { id: saleId },
       select: {
         id: true,
+        status: true,
         isDelivery: true,
         deliveryStatus: true,
       },
@@ -28,6 +29,13 @@ export async function PATCH(_request, context) {
       return NextResponse.json(
         { error: "Venda não encontrada." },
         { status: 404 },
+      );
+    }
+
+    if (sale.status === "CANCELLED") {
+      return NextResponse.json(
+        { error: "Esta venda foi cancelada e não pode avançar na entrega." },
+        { status: 409 },
       );
     }
 

@@ -442,24 +442,27 @@ export default function FiadosPage() {
                                 <tbody>
                                     {account.movements.map((movement) => {
                                         const isCharge = movement.type === "CHARGE";
+                                        const isReversal = movement.type === "REVERSAL";
+
                                         const saleProducts = (movement.sale?.items || [])
-                                            .map(
-                                                (item) =>
-                                                    `${item.product.name} × ${item.quantity}`,
-                                            )
+                                            .map((item) => `${item.product.name} × ${item.quantity}`)
                                             .join(", ");
 
                                         return (
                                             <tr key={movement.id}>
                                                 <td>{formatDate(movement.createdAt)}</td>
-                                                <td>{isCharge ? "Fiado" : "Pagamento"}</td>
+                                                <td>
+                                                    {isCharge ? "Fiado" : isReversal ? "Estorno de venda" : "Pagamento"}
+                                                </td>
                                                 <td>
                                                     {isCharge
                                                         ? saleProducts || "Venda"
-                                                        : paymentLabels[movement.paymentMethod] ||
-                                                        movement.paymentMethod ||
-                                                        "Recebimento"}
-                                                    {movement.notes ? ` · ${movement.notes}` : ""}
+                                                        : isReversal
+                                                            ? movement.notes || "Venda cancelada"
+                                                            : paymentLabels[movement.paymentMethod] ||
+                                                            movement.paymentMethod ||
+                                                            "Recebimento"}
+                                                    {movement.notes && isCharge ? ` · ${movement.notes}` : ""}
                                                 </td>
                                                 <td>
                                                     {isCharge ? "+" : "−"}

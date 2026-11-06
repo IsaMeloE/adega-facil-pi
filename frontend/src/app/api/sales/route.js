@@ -32,9 +32,6 @@ export async function GET() {
             },
           },
         },
-        cancelledByUser: {
-          select: { id: true, name: true },
-        },
       },
     });
 
@@ -44,7 +41,9 @@ export async function GET() {
         canCancel: currentUser.role === "ADMIN",
       })),
     );
-  } catch {
+  } catch (error) {
+    console.error("Erro ao carregar vendas:", error);
+
     return NextResponse.json(
       { error: "Não foi possível carregar as vendas." },
       { status: 500 },

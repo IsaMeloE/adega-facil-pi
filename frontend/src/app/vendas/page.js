@@ -457,68 +457,47 @@ export default function VendasPage() {
                           : "unidades";
 
                       return (
-                        <article key={sale.id} className={styles.saleRow}>
-                          <div className={styles.saleDetails}>
-                            <strong>
-                              {new Date(sale.createdAt).toLocaleString("pt-BR")} ·{" "}
-                              {formatarMoeda(sale.total)}
+                        <article
+                          key={`${item.productId}-${item.saleMode}`}
+                          className={styles.cartItem}
+                        >
+                          <div className={styles.cartItemInfo}>
+                            <strong className={styles.cartItemName}>
+                              {product?.name || "Produto indisponível"}
                             </strong>
 
-                            <span>
-                              {saleDescription} ·{" "}
-                              {rotulosPagamento[sale.paymentMethod] ||
-                                "Pagamento não informado"}
+                            <span className={styles.cartItemMeta}>
+                              {item.quantity} {quantityLabel}
+                              {isPack
+                                ? ` · ${product?.unitsPerPack} unidades por fardo`
+                                : ""}
+                              {" · "}
+                              {formatarMoeda(unitPrice)} cada
                             </span>
-
-                            {isCancelled && (
-                              <span>
-                                Cancelada por {sale.cancelledByUser?.name || "Administrador"} · Motivo:{" "}
-                                {sale.cancellationReason || "Não informado"}
-                              </span>
-                            )}
                           </div>
 
-                          <div className={styles.saleActions}>
-                            <span
-                              className={`${styles.saleStatus} ${isCancelled ? styles.saleStatusCancelled : ""
-                                }`}
+                          <div className={styles.cartItemEnd}>
+                            <strong className={styles.cartItemSubtotal}>
+                              {formatarMoeda(unitPrice * item.quantity)}
+                            </strong>
+
+                            <button
+                              className={styles.removeCartItem}
+                              type="button"
+                              aria-label={`Remover ${product?.name || "produto"} do carrinho`}
+                              onClick={() =>
+                                setCart((currentCart) =>
+                                  currentCart.filter(
+                                    (current) =>
+                                      current.productId !== item.productId ||
+                                      current.saleMode !== item.saleMode,
+                                  ),
+                                )
+                              }
+                              disabled={isSaving}
                             >
-                              {isCancelled ? "Cancelada" : "Registrada"}
-                            </span>
-
-                            {canCancel && (
-                              <details className={styles.saleCancelDetails}>
-                                <summary>Cancelar venda</summary>
-
-                                <form
-                                  className={styles.saleCancelForm}
-                                  onSubmit={(event) => cancelarVenda(event, sale)}
-                                >
-                                  <label htmlFor={`cancel-reason-${sale.id}`}>
-                                    Motivo do cancelamento
-                                  </label>
-
-                                  <textarea
-                                    id={`cancel-reason-${sale.id}`}
-                                    name="reason"
-                                    minLength={5}
-                                    maxLength={500}
-                                    required
-                                    placeholder="Explique por que a venda será cancelada"
-                                  />
-
-                                  <button
-                                    className={styles.secondaryButton}
-                                    type="submit"
-                                    disabled={cancellingSaleId === sale.id}
-                                  >
-                                    {cancellingSaleId === sale.id
-                                      ? "Cancelando..."
-                                      : "Confirmar cancelamento"}
-                                  </button>
-                                </form>
-                              </details>
-                            )}
+                              ×
+                            </button>
                           </div>
                         </article>
                       );

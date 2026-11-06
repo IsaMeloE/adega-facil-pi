@@ -42,7 +42,11 @@ export default function EntregasPage() {
       }
 
       const sales = await response.json();
-      setDeliveries(sales.filter((sale) => sale.isDelivery));
+      setDeliveries(
+        sales.filter(
+          (sale) => sale.isDelivery && sale.status !== "CANCELLED",
+        ),
+      );
       setError("");
     } catch (requestError) {
       if (requestError.name !== "AbortError") {

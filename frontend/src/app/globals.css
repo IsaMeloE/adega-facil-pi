@@ -316,3 +316,8 @@ overflow: visible;
     margin-top: 12px;
   }
 }
+
+.dashboard-status-cancelled {
+  background: #fcebec;
+  color: #a3212d;
+}

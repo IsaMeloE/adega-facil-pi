@@ -91,7 +91,10 @@ export default function Home() {
   const todaySales = useMemo(
     () =>
       sales.filter(
-        (sale) => sale.createdAt && dateKey(new Date(sale.createdAt)) === today,
+        (sale) =>
+          sale.status !== "CANCELLED" &&
+          sale.createdAt &&
+          dateKey(new Date(sale.createdAt)) === today,
       ),
     [sales, today],
   );
@@ -165,7 +168,10 @@ export default function Home() {
   const latestSales = sales.slice(0, 3);
 
   const pendingDeliveries = sales.filter(
-    (sale) => sale.isDelivery && sale.deliveryStatus !== "DELIVERED",
+    (sale) =>
+      sale.status !== "CANCELLED" &&
+      sale.isDelivery &&
+      sale.deliveryStatus !== "DELIVERED",
   ).length;
 
   return (
@@ -284,10 +290,17 @@ export default function Home() {
                         {saleDate ? ` · ${saleDate}` : ""}
                       </span>
                     </div>
-                    <span className="dashboard-status dashboard-status-paid">
-                      {String(sale.paymentMethod || "")
-                        .replaceAll("_", " ")
-                        .toLowerCase()}
+                    <span
+                      className={`dashboard-status ${sale.status === "CANCELLED"
+                          ? "dashboard-status-cancelled"
+                          : "dashboard-status-paid"
+                        }`}
+                    >
+                      {sale.status === "CANCELLED"
+                        ? "Cancelada"
+                        : String(sale.paymentMethod || "")
+                          .replaceAll("_", " ")
+                          .toLowerCase()}
                     </span>
                   </li>
                 );
