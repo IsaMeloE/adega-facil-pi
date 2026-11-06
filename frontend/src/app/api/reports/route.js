@@ -84,6 +84,17 @@ export async function GET(request) {
               },
             },
           },
+          lines: {
+            select: {
+              productId: true,
+              quantity: true,
+              baseQuantity: true,
+              unitPrice: true,
+              product: {
+                select: { name: true },
+              },
+            },
+          },
         },
       }),
       prisma.customer.findMany({

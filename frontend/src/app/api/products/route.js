@@ -39,6 +39,19 @@ export async function POST(request) {
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const salePrice = Number(body.salePrice);
   const minimumStock = Number(body.minimumStock ?? 0);
+  const unitsPerPack =
+    body.unitsPerPack === undefined ||
+      body.unitsPerPack === null ||
+      body.unitsPerPack === ""
+      ? null
+      : Number(body.unitsPerPack);
+
+  const packSalePrice =
+    body.packSalePrice === undefined ||
+      body.packSalePrice === null ||
+      body.packSalePrice === ""
+      ? null
+      : Number(body.packSalePrice);
 
   if (!name || !Number.isFinite(salePrice) || salePrice <= 0) {
     return Response.json(
@@ -50,6 +63,29 @@ export async function POST(request) {
   if (!Number.isInteger(minimumStock) || minimumStock < 0) {
     return Response.json(
       { error: "O estoque mínimo deve ser um número inteiro igual ou maior que zero." },
+      { status: 400 },
+    );
+  }
+
+  const hasPackConfiguration =
+    unitsPerPack !== null || packSalePrice !== null;
+
+  if (
+    hasPackConfiguration &&
+    (
+      unitsPerPack === null ||
+      !Number.isInteger(unitsPerPack) ||
+      unitsPerPack < 2 ||
+      packSalePrice === null ||
+      !Number.isFinite(packSalePrice) ||
+      packSalePrice <= 0
+    )
+  ) {
+    return Response.json(
+      {
+        error:
+          "Para cadastrar um fardo, informe as unidades por fardo (mínimo 2) e um preço maior que zero.",
+      },
       { status: 400 },
     );
   }
@@ -68,6 +104,8 @@ export async function POST(request) {
       data: {
         name,
         salePrice,
+        unitsPerPack,
+        packSalePrice,
         minimumStock,
         category:
           typeof body.category === "string" && body.category.trim()

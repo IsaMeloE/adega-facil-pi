@@ -37,6 +37,7 @@ export default function VendasPage() {
   const [cart, setCart] = useState([]);
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [saleMode, setSaleMode] = useState("UNIT");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDelivery, setIsDelivery] = useState(false);
@@ -123,32 +124,51 @@ export default function VendasPage() {
       return;
     }
 
-    const availableStock = (product.lots || []).filter(loteDentroDaValidade).reduce(
-      (total, lot) => total + lot.quantity,
-      0,
-    );
-    const quantityInCart =
-      cart.find((item) => item.productId === productId)?.quantity || 0;
+    if (
+      saleMode === "PACK" &&
+      (!Number.isInteger(product.unitsPerPack) ||
+        product.unitsPerPack < 2 ||
+        product.packSalePrice == null)
+    ) {
+      setError("Esse produto não tem fardo configurado.");
+      return;
+    }
 
-    if (quantityInCart + amount > availableStock) {
+    const unitsPerSale = saleMode === "PACK" ? product.unitsPerPack : 1;
+
+    const availableStock = (product.lots || [])
+      .filter(loteDentroDaValidade)
+      .reduce((total, lot) => total + lot.quantity, 0);
+
+    const quantityInCart = cart
+      .filter((item) => item.productId === productId)
+      .reduce((total, item) => {
+        const currentUnitsPerSale =
+          item.saleMode === "PACK" ? product.unitsPerPack : 1;
+
+        return total + item.quantity * currentUnitsPerSale;
+      }, 0);
+
+    if (quantityInCart + amount * unitsPerSale > availableStock) {
       setError(`Estoque insuficiente para ${product.name}.`);
       return;
     }
 
     setCart((currentCart) => {
       const existingItem = currentCart.find(
-        (item) => item.productId === productId,
+        (item) =>
+          item.productId === productId && item.saleMode === saleMode,
       );
 
       if (existingItem) {
         return currentCart.map((item) =>
-          item.productId === productId
+          item.productId === productId && item.saleMode === saleMode
             ? { ...item, quantity: item.quantity + amount }
             : item,
         );
       }
 
-      return [...currentCart, { productId, quantity: amount }];
+      return [...currentCart, { productId, saleMode, quantity: amount }];
     });
 
     setProductId("");
@@ -247,9 +267,13 @@ export default function VendasPage() {
     const product = products.find(
       (current) => current.id === item.productId,
     );
-    const unitPriceCents = Math.round(
-      Number(product?.salePrice || 0) * 100,
-    );
+
+    const price =
+      item.saleMode === "PACK"
+        ? product?.packSalePrice
+        : product?.salePrice;
+
+    const unitPriceCents = Math.round(Number(price || 0) * 100);
 
     return total + unitPriceCents * item.quantity;
   }, 0);
@@ -293,7 +317,20 @@ export default function VendasPage() {
                   <select
                     id="productId"
                     value={productId}
-                    onChange={(event) => setProductId(event.target.value)}
+                    onChange={(event) => {
+                      const nextProductId = event.target.value;
+                      const nextProduct = products.find((item) => item.id === nextProductId);
+
+                      setProductId(nextProductId);
+
+                      if (
+                        !Number.isInteger(nextProduct?.unitsPerPack) ||
+                        nextProduct.unitsPerPack < 2 ||
+                        nextProduct.packSalePrice == null
+                      ) {
+                        setSaleMode("UNIT");
+                      }
+                    }}
                     required
                   >
                     <option value="">Selecione um produto</option>
@@ -315,6 +352,27 @@ export default function VendasPage() {
                           </option>
                         );
                       })}
+                  </select>
+                </div>
+
+                <div className={styles.field}>
+                  <label htmlFor="saleMode">Modalidade</label>
+                  <select
+                    id="saleMode"
+                    value={saleMode}
+                    onChange={(event) => setSaleMode(event.target.value)}
+                    disabled={isSaving}
+                  >
+                    <option value="UNIT">Unidade</option>
+                    <option
+                      value="PACK"
+                      disabled={
+                        !products.find((item) => item.id === productId)?.unitsPerPack ||
+                        products.find((item) => item.id === productId)?.packSalePrice == null
+                      }
+                    >
+                      Fardo
+                    </option>
                   </select>
                 </div>
 
@@ -349,17 +407,34 @@ export default function VendasPage() {
                       const product = products.find(
                         (current) => current.id === item.productId,
                       );
-                      const unitPrice = Number(product?.salePrice || 0);
+
+                      const isPack = item.saleMode === "PACK";
+                      const unitPrice = isPack
+                        ? Number(product?.packSalePrice || 0)
+                        : Number(product?.salePrice || 0);
+
+                      const quantityLabel = isPack
+                        ? item.quantity === 1
+                          ? "fardo"
+                          : "fardos"
+                        : item.quantity === 1
+                          ? "unidade"
+                          : "unidades";
 
                       return (
-                        <article key={item.productId} className={styles.cartItem}>
+                        <article
+                          key={`${item.productId}-${item.saleMode}`}
+                          className={styles.cartItem}
+                        >
                           <div className={styles.cartItemInfo}>
                             <strong className={styles.cartItemName}>
                               {product?.name || "Produto indisponível"}
                             </strong>
+
                             <span className={styles.cartItemMeta}>
-                              {item.quantity} {item.quantity === 1 ? "unidade" : "unidades"}
-                              {" • "}
+                              {item.quantity} {quantityLabel}
+                              {isPack ? ` · ${product?.unitsPerPack} unidades por fardo` : ""}
+                              {" · "}
                               {formatarMoeda(unitPrice)} cada
                             </span>
                           </div>
@@ -368,6 +443,7 @@ export default function VendasPage() {
                             <strong className={styles.cartItemSubtotal}>
                               {formatarMoeda(unitPrice * item.quantity)}
                             </strong>
+
                             <button
                               className={styles.removeCartItem}
                               type="button"
@@ -375,7 +451,9 @@ export default function VendasPage() {
                               onClick={() =>
                                 setCart((currentCart) =>
                                   currentCart.filter(
-                                    (current) => current.productId !== item.productId,
+                                    (current) =>
+                                      current.productId !== item.productId ||
+                                      current.saleMode !== item.saleMode,
                                   ),
                                 )
                               }
@@ -555,23 +633,63 @@ export default function VendasPage() {
               <p>Nenhuma venda registrada.</p>
             ) : (
               <div className={styles.salesList}>
-                {sales.map((sale) => (
-                  <article key={sale.id} className={styles.saleRow}>
-                    <div className={styles.saleDetails}>
-                      <strong>
-                        {new Date(sale.createdAt).toLocaleString("pt-BR")} ·{" "}
-                        {formatarMoeda(sale.total)}
-                      </strong>
-                      <span>
-                        {sale.items
-                          .map((item) => `${item.product.name} × ${item.quantity}`)
-                          .join(", ")}{" "}
-                        · {rotulosPagamento[sale.paymentMethod] || "Pagamento não informado"}
-                      </span>
-                    </div>
-                    <span className={styles.saleStatus}>Registrada</span>
-                  </article>
-                ))}
+                {sales.map((sale) => {
+                  const saleDescription = sale.lines?.length
+                    ? sale.lines
+                      .map((line) => {
+                        const label =
+                          line.saleMode === "PACK"
+                            ? line.quantity === 1
+                              ? "fardo"
+                              : "fardos"
+                            : line.quantity === 1
+                              ? "unidade"
+                              : "unidades";
+
+                        return `${line.product.name} × ${line.quantity} ${label}`;
+                      })
+                      .join(", ")
+                    : Object.values(
+                      (sale.items || []).reduce((grouped, item) => {
+                        const key = item.productId;
+
+                        if (!grouped[key]) {
+                          grouped[key] = {
+                            name: item.product.name,
+                            quantity: 0,
+                          };
+                        }
+
+                        grouped[key].quantity += item.quantity;
+                        return grouped;
+                      }, {}),
+                    )
+                      .map(
+                        (item) =>
+                          `${item.name} × ${item.quantity} ${item.quantity === 1 ? "unidade" : "unidades"
+                          }`,
+                      )
+                      .join(", ");
+
+                  return (
+                    <article key={sale.id} className={styles.saleRow}>
+                      <div className={styles.saleDetails}>
+                        <strong>
+                          {new Date(sale.createdAt).toLocaleString("pt-BR")} ·{" "}
+                          {formatarMoeda(sale.total)}
+                        </strong>
+
+                        <span>
+                          {saleDescription} ·{" "}
+                          {rotulosPagamento[sale.paymentMethod] ||
+                            "Pagamento não informado"}
+                        </span>
+                      </div>
+
+                      <span className={styles.saleStatus}>Registrada</span>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>

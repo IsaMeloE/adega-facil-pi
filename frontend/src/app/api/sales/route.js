@@ -22,6 +22,16 @@ export async function GET() {
             lot: { select: { lotCode: true, expiresAt: true } },
           },
         },
+        lines: {
+          include: {
+            product: { select: { id: true, name: true } },
+            allocations: {
+              include: {
+                lot: { select: { lotCode: true, expiresAt: true } },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -45,7 +55,24 @@ export async function POST(request) {
       );
     }
 
-    const body = await request.json();
+    let body;
+
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "O corpo da requisição deve ser JSON." },
+        { status: 400 },
+      );
+    }
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "Informe os dados da venda." },
+        { status: 400 },
+      );
+    }
+
     const items = body.items;
     const customerId =
       typeof body.customerId === "string" ? body.customerId.trim() : "";
@@ -119,131 +146,179 @@ export async function POST(request) {
       );
     }
 
-    const productIds = new Set();
+    const itemKeys = new Set();
 
     for (const item of items) {
       if (
         typeof item.productId !== "string" ||
+        !item.productId.trim() ||
         !Number.isInteger(item.quantity) ||
-        item.quantity < 1
+        item.quantity < 1 ||
+        !["UNIT", "PACK"].includes(item.saleMode)
       ) {
         return NextResponse.json(
-          { error: "Produto ou quantidade inválidos." },
+          { error: "Produto, modalidade ou quantidade inválidos." },
           { status: 400 },
         );
       }
 
-      if (productIds.has(item.productId)) {
+      const key = `${item.productId}:${item.saleMode}`;
+
+      if (itemKeys.has(key)) {
         return NextResponse.json(
-          { error: "Informe cada produto uma única vez na venda." },
+          { error: "Não repita o mesmo produto na mesma modalidade." },
           { status: 400 },
         );
       }
 
-      productIds.add(item.productId);
+      itemKeys.add(key);
     }
 
     const inicioDoDia = new Date();
     inicioDoDia.setHours(0, 0, 0, 0);
 
+    const toCents = (value) => Math.round(Number(value || 0) * 100);
+
     const sale = await prisma.$transaction(
       async (tx) => {
         let totalCents = deliveryFeeCents;
-        const deductions = [];
-        const saleItems = [];
+        const productsById = new Map();
+        const remainingByLotId = new Map();
+        const preparedLines = [];
+        const deductionsByLotId = new Map();
 
         if (body.paymentMethod === "FIADO") {
           const customer = await tx.customer.findUnique({
             where: { id: customerId },
+            select: { id: true, isActive: true },
           });
 
           if (!customer || !customer.isActive) {
-            throw Object.assign(new Error("Cliente não encontrado ou inativo."), {
-              status: 404,
-            });
+            throw Object.assign(
+              new Error("Cliente não encontrado ou inativo."),
+              { status: 404 },
+            );
           }
         }
 
         for (const item of items) {
-          const product = await tx.product.findUnique({
-            where: { id: item.productId },
-            include: {
-              lots: {
-                where: {
-                  quantity: { gt: 0 },
-                  OR: [
-                    { expiresAt: null },
-                    { expiresAt: { gte: inicioDoDia } },
+          const productId = item.productId.trim();
+          let product = productsById.get(productId);
+
+          if (!product) {
+            product = await tx.product.findUnique({
+              where: { id: productId },
+              include: {
+                lots: {
+                  where: {
+                    quantity: { gt: 0 },
+                    OR: [
+                      { expiresAt: null },
+                      { expiresAt: { gte: inicioDoDia } },
+                    ],
+                  },
+                  orderBy: [
+                    { expiresAt: { sort: "asc", nulls: "last" } },
+                    { createdAt: "asc" },
                   ],
                 },
-                orderBy: [
-                  { expiresAt: { sort: "asc", nulls: "last" } },
-                  { createdAt: "asc" },
-                ],
-
               },
-            },
-          });
-
-          if (!product || !product.isActive) {
-            throw Object.assign(new Error("Produto não encontrado ou inativo."), {
-              status: 404,
             });
+
+            if (!product || !product.isActive) {
+              throw Object.assign(
+                new Error("Produto não encontrado ou inativo."),
+                { status: 404 },
+              );
+            }
+
+            productsById.set(productId, product);
+
+            for (const lot of product.lots) {
+              remainingByLotId.set(lot.id, lot.quantity);
+            }
           }
 
-          const availableQuantity = product.lots.reduce(
-            (total, lot) => total + lot.quantity,
-            0,
-          );
+          let baseQuantity;
+          let unitPriceCents;
 
-          if (availableQuantity < item.quantity) {
+          if (item.saleMode === "PACK") {
+            if (
+              !Number.isInteger(product.unitsPerPack) ||
+              product.unitsPerPack < 2 ||
+              product.packSalePrice == null ||
+              toCents(product.packSalePrice) <= 0
+            ) {
+              throw Object.assign(
+                new Error(`O produto ${product.name} não tem fardo configurado.`),
+                { status: 400 },
+              );
+            }
+
+            baseQuantity = item.quantity * product.unitsPerPack;
+            unitPriceCents = toCents(product.packSalePrice);
+          } else {
+            baseQuantity = item.quantity;
+            unitPriceCents = toCents(product.salePrice);
+          }
+
+          if (!Number.isSafeInteger(baseQuantity) || baseQuantity < 1) {
             throw Object.assign(
-              new Error(`Estoque válido insuficiente para ${product.name}.`),
-              { status: 409 },
+              new Error(`Quantidade inválida para ${product.name}.`),
+              { status: 400 },
             );
           }
 
-          const unitPriceCents = Math.round(
-            product.salePrice.toNumber() * 100,
-          );
-
-          totalCents += unitPriceCents * item.quantity;
-
-          let remainingQuantity = item.quantity;
+          let remainingQuantity = baseQuantity;
+          const allocations = [];
 
           for (const lot of product.lots) {
             if (remainingQuantity === 0) break;
 
-            const quantityFromLot = Math.min(
-              remainingQuantity,
-              lot.quantity,
-            );
+            const lotRemaining = remainingByLotId.get(lot.id) ?? 0;
+            const quantityFromLot = Math.min(remainingQuantity, lotRemaining);
 
-            deductions.push({
-              lotId: lot.id,
-              quantity: quantityFromLot,
-            });
+            if (quantityFromLot === 0) continue;
 
-            saleItems.push({
-              productId: product.id,
-              lotId: lot.id,
-              quantity: quantityFromLot,
-              unitPrice: product.salePrice.toNumber(),
-              unitCost: lot.unitCost.toNumber(),
-            });
-
+            allocations.push({ lot, quantity: quantityFromLot });
+            remainingByLotId.set(lot.id, lotRemaining - quantityFromLot);
             remainingQuantity -= quantityFromLot;
+
+            deductionsByLotId.set(
+              lot.id,
+              (deductionsByLotId.get(lot.id) || 0) + quantityFromLot,
+            );
           }
+
+          if (remainingQuantity > 0) {
+            throw Object.assign(
+              new Error(
+                `Estoque válido insuficiente para ${product.name}.`,
+              ),
+              { status: 409 },
+            );
+          }
+
+          totalCents += unitPriceCents * item.quantity;
+
+          preparedLines.push({
+            product,
+            saleMode: item.saleMode,
+            quantity: item.quantity,
+            baseQuantity,
+            unitPriceCents,
+            allocations,
+          });
         }
 
-        for (const deduction of deductions) {
+        for (const [lotId, quantity] of deductionsByLotId) {
           const result = await tx.lot.updateMany({
             where: {
-              id: deduction.lotId,
-              quantity: { gte: deduction.quantity },
+              id: lotId,
+              quantity: { gte: quantity },
             },
             data: {
-              quantity: { decrement: deduction.quantity },
+              quantity: { decrement: quantity },
             },
           });
 
@@ -269,12 +344,30 @@ export async function POST(request) {
           },
         });
 
-        await tx.saleItem.createMany({
-          data: saleItems.map((item) => ({
-            ...item,
-            saleId: createdSale.id,
-          })),
-        });
+        for (const line of preparedLines) {
+          const createdLine = await tx.saleLine.create({
+            data: {
+              saleId: createdSale.id,
+              productId: line.product.id,
+              saleMode: line.saleMode,
+              quantity: line.quantity,
+              baseQuantity: line.baseQuantity,
+              unitPrice: line.unitPriceCents / 100,
+            },
+          });
+
+          await tx.saleItem.createMany({
+            data: line.allocations.map(({ lot, quantity }) => ({
+              saleId: createdSale.id,
+              productId: line.product.id,
+              saleLineId: createdLine.id,
+              lotId: lot.id,
+              quantity,
+              unitPrice: null,
+              unitCost: lot.unitCost,
+            })),
+          });
+        }
 
         if (body.paymentMethod === "FIADO") {
           await tx.creditMovement.create({
@@ -296,6 +389,16 @@ export async function POST(request) {
                 lot: { select: { lotCode: true, expiresAt: true } },
               },
             },
+            lines: {
+              include: {
+                product: { select: { id: true, name: true } },
+                allocations: {
+                  include: {
+                    lot: { select: { lotCode: true, expiresAt: true } },
+                  },
+                },
+              },
+            },
           },
         });
       },
@@ -310,6 +413,13 @@ export async function POST(request) {
       return NextResponse.json(
         { error: error.message },
         { status: error.status },
+      );
+    }
+
+    if (error.code === "P2034") {
+      return NextResponse.json(
+        { error: "O estoque mudou. Atualize a tela e tente novamente." },
+        { status: 409 },
       );
     }
 

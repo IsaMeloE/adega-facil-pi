@@ -8,16 +8,19 @@ datasource db {
 }
 
 model Product {
-  id           String     @id @default(cuid())
-  name         String
-  category     String?
-  barcode      String?    @unique
-  salePrice    Decimal    @db.Decimal(10, 2)
-  minimumStock Int        @default(0)
-  isActive     Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  saleItems    SaleItem[]
+  id            String     @id @default(cuid())
+  name          String
+  category      String?
+  barcode       String?    @unique
+  salePrice     Decimal    @db.Decimal(10, 2)
+  unitsPerPack  Int?
+  packSalePrice Decimal?   @db.Decimal(10, 2)
+  minimumStock  Int        @default(0)
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  saleItems     SaleItem[]
+  saleLines     SaleLine[]
 
   lots Lot[]
 }
@@ -48,6 +51,7 @@ model Sale {
   deliveryNotes   String?
   createdAt       DateTime        @default(now())
   items           SaleItem[]
+  lines           SaleLine[]
   customerId      String?
   customer        Customer?       @relation(fields: [customerId], references: [id], onDelete: Restrict)
   creditMovement  CreditMovement?
@@ -56,21 +60,41 @@ model Sale {
 }
 
 model SaleItem {
-  id        String  @id @default(cuid())
-  saleId    String
-  productId String
-  lotId     String
-  quantity  Int
-  unitPrice Decimal @db.Decimal(10, 2)
-  unitCost  Decimal @db.Decimal(10, 2)
+  id         String  @id @default(cuid())
+  saleId     String
+  productId  String
+  lotId      String
+  saleLineId String?
+  quantity   Int
+  unitPrice  Decimal? @db.Decimal(10, 2)
+  unitCost   Decimal @db.Decimal(10, 2)
 
-  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
-  lot     Lot     @relation(fields: [lotId], references: [id], onDelete: Restrict)
+  sale     Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product  Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+  lot      Lot       @relation(fields: [lotId], references: [id], onDelete: Restrict)
+  saleLine SaleLine? @relation(fields: [saleLineId], references: [id], onDelete: SetNull)
 
   @@index([saleId])
   @@index([productId])
   @@index([lotId])
+  @@index([saleLineId])
+}
+
+model SaleLine {
+  id           String   @id @default(cuid())
+  saleId       String
+  productId    String
+  saleMode     SaleMode
+  quantity     Int
+  baseQuantity Int
+  unitPrice    Decimal  @db.Decimal(10, 2)
+
+  sale        Sale       @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product     Product    @relation(fields: [productId], references: [id], onDelete: Restrict)
+  allocations SaleItem[]
+
+  @@index([saleId])
+  @@index([productId])
 }
 
 enum CreditMovementType {
@@ -82,6 +106,11 @@ enum DeliveryStatus {
   PENDING
   IN_ROUTE
   DELIVERED
+}
+
+enum SaleMode {
+  UNIT
+  PACK
 }
 
 enum UserRole {

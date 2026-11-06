@@ -9,6 +9,8 @@ const formInicial = {
   category: "",
   barcode: "",
   salePrice: "",
+  unitsPerPack: "",
+  packSalePrice: "",
   minimumStock: "0",
 };
 
@@ -105,6 +107,10 @@ export default function ProdutosPage() {
         body: JSON.stringify({
           ...form,
           salePrice: Number(form.salePrice),
+          unitsPerPack:
+            form.unitsPerPack === "" ? null : Number(form.unitsPerPack),
+          packSalePrice:
+            form.packSalePrice === "" ? null : Number(form.packSalePrice),
           minimumStock: Number(form.minimumStock),
         }),
       });
@@ -227,6 +233,34 @@ export default function ProdutosPage() {
           </div>
 
           <div className={styles.field}>
+            <label htmlFor="unitsPerPack">Unidades por fardo (opcional)</label>
+            <input
+              id="unitsPerPack"
+              name="unitsPerPack"
+              type="number"
+              min="2"
+              step="1"
+              value={form.unitsPerPack}
+              onChange={atualizarCampo}
+              required={form.packSalePrice !== ""}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="packSalePrice">Preço do fardo (R$) (opcional)</label>
+            <input
+              id="packSalePrice"
+              name="packSalePrice"
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={form.packSalePrice}
+              onChange={atualizarCampo}
+              required={form.unitsPerPack !== ""}
+            />
+          </div>
+
+          <div className={styles.field}>
             <label htmlFor="minimumStock">Estoque mínimo</label>
             <input
               id="minimumStock"
@@ -295,6 +329,7 @@ export default function ProdutosPage() {
                   <th scope="col">Lotes</th>
                   <th scope="col">Estoque</th>
                   <th scope="col">Preço</th>
+                  <th scope="col">Fardo</th>
                   <th scope="col">Código de barras</th>
                   <th scope="col">Validade</th>
                   <th scope="col">Situação</th>
@@ -330,6 +365,18 @@ export default function ProdutosPage() {
                           currency: "BRL",
                         })}
                       </td>
+
+                      <td>
+                        {product.unitsPerPack && product.packSalePrice != null
+                          ? `${product.unitsPerPack} un. · ${Number(
+                            product.packSalePrice,
+                          ).toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}`
+                          : "—"}
+                      </td>
+
                       <td>{product.barcode || "—"}</td>
                       <td>
                         <span className={`${styles.statusBadge} ${validity.className}`}>
