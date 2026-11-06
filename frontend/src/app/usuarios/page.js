@@ -15,6 +15,7 @@ export default function UsuariosPage() {
     const [pin, setPin] = useState("");
     const [role, setRole] = useState("OPERATOR");
     const [resetPins, setResetPins] = useState({});
+    const [resetPinErrors, setResetPinErrors] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [updatingUserId, setUpdatingUserId] = useState("");
@@ -96,10 +97,19 @@ export default function UsuariosPage() {
         }
     }
 
+    function handleResetPinChange(userId, value) {
+        setResetPinErrors((current) => ({ ...current, [userId]: false }));
+        setResetPins((current) => ({
+            ...current,
+            [userId]: value.replace(/\D/g, "").slice(0, 6),
+        }));
+    }
+
     async function updateUser(user, changes) {
         setError("");
         setSuccess("");
         setUpdatingUserId(user.id);
+        setResetPinErrors((current) => ({ ...current, [user.id]: false }));
 
         try {
             const response = await fetch(`/api/users/${user.id}`, {
@@ -132,6 +142,12 @@ export default function UsuariosPage() {
             await loadData();
         } catch (requestError) {
             setError(requestError.message);
+            if (
+                Object.hasOwn(changes, "pin") &&
+                requestError.message === "O novo PIN deve ter exatamente 6 dígitos."
+            ) {
+                setResetPinErrors((current) => ({ ...current, [user.id]: true }));
+            }
         } finally {
             setUpdatingUserId("");
         }
@@ -152,7 +168,7 @@ export default function UsuariosPage() {
                 </div>
             </header>
 
-            {error && <p className={styles.error} role="alert">{error}</p>}
+            {error && <p id="users-error" className={styles.error} role="alert">{error}</p>}
             {success && <p className={styles.success} role="status">{success}</p>}
 
             <section className={styles.formCard} aria-labelledby="new-user-title">
@@ -268,13 +284,16 @@ export default function UsuariosPage() {
                                                             pattern="[0-9]{6}"
                                                             maxLength={6}
                                                             placeholder="Novo PIN"
-                                                            value={resetPins[user.id] || ""}
+                                                            value={resetPins[user.id] || ""                                                            }
                                                             onChange={(event) =>
-                                                                setResetPins((current) => ({
-                                                                    ...current,
-                                                                    [user.id]: event.target.value.replace(/\D/g, "").slice(0, 6),
-                                                                }))
+                                                                handleResetPinChange(user.id, event.target.value)
                                                             }
+                                                            aria-describedby={
+                                                                resetPinErrors[user.id]
+                                                                    ? "users-error"
+                                                                    : undefined
+                                                            }
+                                                            aria-invalid={resetPinErrors[user.id] || undefined}
                                                             required
                                                         />
                                                         <button
