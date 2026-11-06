@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import styles from "../produtos/produtos.module.css";
 import UserBadge from "../components/UserBadge";
+import { formatCurrency } from "@/lib/formatters";
 
 const paymentLabels = {
     PIX: "Pix",
@@ -10,13 +11,6 @@ const paymentLabels = {
     CARTAO_DEBITO: "Cartão de débito",
     CARTAO_CREDITO: "Cartão de crédito",
 };
-
-function formatCurrency(value) {
-    return Number(value || 0).toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-    });
-}
 
 function formatDate(value) {
     if (!value) return "Data não informada";

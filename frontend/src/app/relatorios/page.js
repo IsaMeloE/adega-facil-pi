@@ -3,13 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import styles from "../produtos/produtos.module.css";
 import UserBadge from "../components/UserBadge";
-
-function formatCurrency(value) {
-  return Number(value || 0).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
+import { formatCurrency } from "@/lib/formatters";
 
 function formatLocalDate(date) {
   const year = date.getFullYear();

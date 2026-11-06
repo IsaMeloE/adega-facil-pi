@@ -3,19 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import styles from "../produtos/produtos.module.css";
 import UserBadge from "../components/UserBadge";
+import { formatCurrency } from "@/lib/formatters";
 
 const statusLabels = {
   PENDING: "Pendente",
   IN_ROUTE: "Em rota",
   DELIVERED: "Entregue",
 };
-
-function formatCurrency(value) {
-  return Number(value || 0).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
 
 function formatDate(value) {
   return new Date(value).toLocaleString("pt-BR", {

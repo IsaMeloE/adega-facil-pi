@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "../app/produtos/produtos.module.css";
 import UserBadge from "./components/UserBadge";
+import { formatCurrency } from "@/lib/formatters";
 
 function dateKey(date) {
   return [
@@ -10,13 +11,6 @@ function dateKey(date) {
     String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0"),
   ].join("-");
-}
-
-function formatCurrency(value) {
-  return Number(value || 0).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
 }
 
 function validityStatus(expiresAt, today, limit) {

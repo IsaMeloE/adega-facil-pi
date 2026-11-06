@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react";
 import styles from "../produtos/produtos.module.css";
 import UserBadge from "../components/UserBadge";
-
-const formatarMoeda = (valor) =>
-  Number(valor || 0).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+import { formatCurrency } from "@/lib/formatters";
 
 const rotulosPagamento = {
   FIADO: "Fiado",
@@ -472,13 +467,13 @@ export default function VendasPage() {
                                 ? ` · ${product?.unitsPerPack} unidades por fardo`
                                 : ""}
                               {" · "}
-                              {formatarMoeda(unitPrice)} cada
+                              {formatCurrency(unitPrice)} cada
                             </span>
                           </div>
 
                           <div className={styles.cartItemEnd}>
                             <strong className={styles.cartItemSubtotal}>
-                              {formatarMoeda(unitPrice * item.quantity)}
+                              {formatCurrency(unitPrice * item.quantity)}
                             </strong>
 
                             <button
@@ -615,7 +610,7 @@ export default function VendasPage() {
 
                   <div className={styles.checkoutSummary}>
                     <span>Total da venda</span>
-                    <strong>{formatarMoeda(cartTotal)}</strong>
+                    <strong>{formatCurrency(cartTotal)}</strong>
                     <small>{cart.length} item(ns) no carrinho</small>
                   </div>
 
@@ -718,7 +713,7 @@ export default function VendasPage() {
                       <div className={styles.saleDetails}>
                         <strong>
                           {new Date(sale.createdAt).toLocaleString("pt-BR")} ·{" "}
-                          {formatarMoeda(sale.total)}
+                          {formatCurrency(sale.total)}
                         </strong>
 
                         <span>
