@@ -64,6 +64,7 @@ export async function GET(request) {
     const [sales, customers] = await Promise.all([
       prisma.sale.findMany({
         where: {
+          status: "COMPLETED",
           createdAt: {
             gte: startDate,
             lt: endDate,
@@ -163,6 +164,7 @@ export async function GET(request) {
     const openCreditCents = customers.reduce((total, customer) => {
       let chargesCents = 0;
       let paymentsCents = 0;
+      let reversalsCents = 0;
 
       for (const movement of customer.creditMovements) {
         if (movement.type === "CHARGE") {
@@ -170,9 +172,14 @@ export async function GET(request) {
         } else if (movement.type === "PAYMENT") {
           paymentsCents += toCents(movement.amount);
         }
+        else if (movement.type === "REVERSAL") {
+          reversalsCents += toCents(movement.amount);
+        }
       }
 
-      return total + Math.max(0, chargesCents - paymentsCents);
+      return (
+        total + Math.max(0, chargesCents - paymentsCents - reversalsCents)
+      );
     }, 0);
 
     const topProducts = [...productsById.values()]

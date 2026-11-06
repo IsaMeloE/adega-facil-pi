@@ -67,7 +67,11 @@ export async function GET() {
         .filter((movement) => movement.type === "PAYMENT")
         .reduce((total, movement) => total + toCents(movement.amount), 0);
 
-      const balanceCents = chargesCents - paymentsCents;
+      const reversalsCents = customer.creditMovements
+        .filter((movement) => movement.type === "REVERSAL")
+        .reduce((total, movement) => total + toCents(movement.amount), 0);
+
+      const balanceCents = chargesCents - paymentsCents - reversalsCents;
 
       return {
         id: customer.id,
@@ -167,19 +171,25 @@ export async function POST(request) {
           );
         }
 
-        const [charges, payments] = await Promise.all([
-          tx.creditMovement.aggregate({
-            where: { customerId, type: "CHARGE" },
-            _sum: { amount: true },
-          }),
-          tx.creditMovement.aggregate({
-            where: { customerId, type: "PAYMENT" },
-            _sum: { amount: true },
-          }),
-        ]);
+        const charges = await tx.creditMovement.aggregate({
+          where: { customerId, type: "CHARGE" },
+          _sum: { amount: true },
+        });
+
+        const payments = await tx.creditMovement.aggregate({
+          where: { customerId, type: "PAYMENT" },
+          _sum: { amount: true },
+        });
+
+        const reversals = await tx.creditMovement.aggregate({
+          where: { customerId, type: "REVERSAL" },
+          _sum: { amount: true },
+        });
 
         const balanceCents =
-          toCents(charges._sum.amount) - toCents(payments._sum.amount);
+          toCents(charges._sum.amount) -
+          toCents(payments._sum.amount) -
+          toCents(reversals._sum.amount);
 
         if (balanceCents <= 0) {
           throw Object.assign(

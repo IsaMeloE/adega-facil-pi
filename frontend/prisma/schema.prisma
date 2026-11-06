@@ -41,33 +41,40 @@ model Lot {
 }
 
 model Sale {
-  id              String          @id @default(cuid())
-  total           Decimal         @db.Decimal(10, 2)
-  paymentMethod   String?
-  isDelivery      Boolean         @default(false)
-  deliveryStatus  DeliveryStatus?
-  deliveryFee     Decimal         @default(0) @db.Decimal(10, 2)
-  deliveryAddress String?
-  deliveryNotes   String?
-  createdAt       DateTime        @default(now())
-  items           SaleItem[]
-  lines           SaleLine[]
-  customerId      String?
-  customer        Customer?       @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  creditMovement  CreditMovement?
-  createdByUserId String?
-  createdByUser   User?           @relation("SaleCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  id                 String          @id @default(cuid())
+  total              Decimal         @db.Decimal(10, 2)
+  paymentMethod      String?
+  isDelivery         Boolean         @default(false)
+  deliveryStatus     DeliveryStatus?
+  deliveryFee        Decimal         @default(0) @db.Decimal(10, 2)
+  deliveryAddress    String?
+  deliveryNotes      String?
+  createdAt          DateTime        @default(now())
+  status             SaleStatus      @default(COMPLETED)
+  cancelledAt        DateTime?
+  cancelledByUserId  String?
+  cancellationReason String?
+  cancelledByUser    User?           @relation("SaleCanceller", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
+  items              SaleItem[]
+  lines              SaleLine[]
+  customerId         String?
+  customer           Customer?       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  creditMovement     CreditMovement?
+  createdByUserId    String?
+  createdByUser      User?           @relation("SaleCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
 }
 
 model SaleItem {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   saleId     String
   productId  String
   lotId      String
   saleLineId String?
   quantity   Int
   unitPrice  Decimal? @db.Decimal(10, 2)
-  unitCost   Decimal @db.Decimal(10, 2)
+  unitCost   Decimal  @db.Decimal(10, 2)
 
   sale     Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
   product  Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
@@ -100,12 +107,18 @@ model SaleLine {
 enum CreditMovementType {
   CHARGE
   PAYMENT
+  REVERSAL
 }
 
 enum DeliveryStatus {
   PENDING
   IN_ROUTE
   DELIVERED
+}
+
+enum SaleStatus {
+  COMPLETED
+  CANCELLED
 }
 
 enum SaleMode {
@@ -138,6 +151,9 @@ model CreditMovement {
   paymentMethod String?
   notes         String?
   createdAt     DateTime           @default(now())
+  reversalOfId  String?            @unique
+  reversalOf    CreditMovement?    @relation("CreditMovementReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversedBy    CreditMovement?    @relation("CreditMovementReversal")
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
   sale     Sale?    @relation(fields: [saleId], references: [id], onDelete: Restrict)
@@ -154,6 +170,7 @@ model User {
   failedPinAttempts Int           @default(0)
   lockedUntil       DateTime?
   createdAt         DateTime      @default(now())
+  cancelledSales    Sale[]        @relation("SaleCanceller")
   updatedAt         DateTime      @updatedAt
   sales             Sale[]        @relation("SaleCreator")
   sessions          UserSession[]
