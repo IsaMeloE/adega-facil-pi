@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./login.module.css";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -78,7 +79,13 @@ export default function LoginPage() {
   return (
     <main className={styles.page}>
       <section className={styles.card} aria-labelledby="login-title">
-        <div className={styles.brandMark}>AF</div>
+        <Image
+          src="/logo-adega-facil.png"
+          alt="AdegaFácil"
+          width={52}
+          height={52}
+          className="brand-mark"
+        />
         <p className={styles.eyebrow}>ADEGAFÁCIL</p>
         <h1 id="login-title">Acesse sua conta</h1>
         <p className={styles.description}>

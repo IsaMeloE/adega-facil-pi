@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 
 export const AuthUserContext = createContext(null);
 
@@ -89,45 +90,51 @@ export default function AppShell({ children }) {
   return (
     <AuthUserContext.Provider value={user}>
 
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <span className="brand-mark">AF</span>
-          <div>
-            <strong>AdegaFácil</strong>
-            <span>Gestão de bebidas</span>
+      <div className="app-shell">
+        <aside className="sidebar">
+          <div className="brand">
+            <Image
+              src="/logo-adega-facil.png"
+              alt="AdegaFácil"
+              width={52}
+              height={52}
+              className="brand-mark"
+            />
+            <div>
+              <strong>AdegaFácil</strong>
+              <span>Gestão de bebidas</span>
+            </div>
           </div>
-        </div>
 
-        <nav aria-label="Navegação principal" className="nav-list">
-          {visibleModules.map((module) => {
-            const isActive = pathname === module.href;
+          <nav aria-label="Navegação principal" className="nav-list">
+            {visibleModules.map((module) => {
+              const isActive = pathname === module.href;
 
-            return (
-              <Link
-                key={module.id}
-                className={`nav-item ${isActive ? "active" : ""}`}
-                href={module.href}
-                aria-current={isActive ? "page" : undefined}
-              >
-                {module.label}
-              </Link>
-            );
-          })}
-        </nav>
+              return (
+                <Link
+                  key={module.id}
+                  className={`nav-item ${isActive ? "active" : ""}`}
+                  href={module.href}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {module.label}
+                </Link>
+              );
+            })}
+          </nav>
 
-        <button
-          className="nav-item sidebar-logout"
-          type="button"
-          onClick={logout}
-          aria-label={`Sair da conta de ${user?.name || "usuário"}`}
-        >
-          Sair
-        </button>
-      </aside>
+          <button
+            className="nav-item sidebar-logout"
+            type="button"
+            onClick={logout}
+            aria-label={`Sair da conta de ${user?.name || "usuário"}`}
+          >
+            Sair
+          </button>
+        </aside>
 
-      <div className="content">{children}</div>
-    </div>
+        <div className="content">{children}</div>
+      </div>
     </AuthUserContext.Provider>
   );
 }
