@@ -127,19 +127,36 @@ export async function GET(request) {
       payment.totalCents += saleTotalCents;
       paymentsByMethod.set(method, payment);
 
-      for (const item of sale.items) {
-        unitsSold += item.quantity;
+      if (sale.lines?.length) {
+        for (const line of sale.lines) {
+          unitsSold += line.baseQuantity;
 
-        const product = productsById.get(item.productId) || {
-          productId: item.productId,
-          name: item.product.name,
-          quantity: 0,
-          totalCents: 0,
-        };
+          const product = productsById.get(line.productId) || {
+            productId: line.productId,
+            name: line.product.name,
+            quantity: 0,
+            totalCents: 0,
+          };
 
-        product.quantity += item.quantity;
-        product.totalCents += toCents(item.unitPrice) * item.quantity;
-        productsById.set(item.productId, product);
+          product.quantity += line.baseQuantity;
+          product.totalCents += toCents(line.unitPrice) * line.quantity;
+          productsById.set(line.productId, product);
+        }
+      } else {
+        for (const item of sale.items) {
+          unitsSold += item.quantity;
+
+          const product = productsById.get(item.productId) || {
+            productId: item.productId,
+            name: item.product.name,
+            quantity: 0,
+            totalCents: 0,
+          };
+
+          product.quantity += item.quantity;
+          product.totalCents += toCents(item.unitPrice) * item.quantity;
+          productsById.set(item.productId, product);
+        }
       }
     }
 
