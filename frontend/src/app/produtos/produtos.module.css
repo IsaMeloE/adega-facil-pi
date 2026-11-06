@@ -840,3 +840,38 @@
   border-radius: 8px;
   font: inherit;
 }
+
+.saleActions {
+  display: grid;
+  justify-items: end;
+  align-content: start;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.saleStatusCancelled {
+  background: #fcebec;
+  color: #a3212d;
+}
+
+.saleCancelDetails summary {
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.saleCancelForm {
+  display: grid;
+  width: min(280px, 75vw);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.saleCancelForm textarea {
+  min-height: 72px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  resize: vertical;
+}
