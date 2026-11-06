@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { requireUser } from "@/lib/api-auth";
 import { allocateLotsFefo } from "@/lib/sales/fefo";
 import { toCents } from "@/lib/money";
 
 export async function GET() {
   try {
-    const currentUser = await getCurrentUser();
+    const { user: currentUser, response } = await requireUser();
 
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: "Acesso não autorizado." },
-        { status: 401 },
-      );
+    if (response) {
+      return response;
     }
 
     const sales = await prisma.sale.findMany({
@@ -55,13 +52,10 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const currentUser = await getCurrentUser();
+    const { user: currentUser, response } = await requireUser();
 
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: "Acesso não autorizado." },
-        { status: 401 },
-      );
+    if (response) {
+      return response;
     }
 
     let body;

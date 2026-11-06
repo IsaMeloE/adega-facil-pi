@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCurrentUser, hashPin } from "@/lib/auth";
+import { hashPin } from "@/lib/auth";
+import { requireUser } from "@/lib/api-auth";
 
 export async function GET() {
   try {
-    const currentUser = await getCurrentUser();
+    const { user: currentUser, response } = await requireUser();
 
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: "Acesso não autorizado." },
-        { status: 401 },
-      );
+    if (response) {
+      return response;
     }
 
     if (currentUser.role !== "ADMIN") {
@@ -47,13 +45,10 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const currentUser = await getCurrentUser();
+    const { user: currentUser, response } = await requireUser();
 
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: "Acesso não autorizado." },
-        { status: 401 },
-      );
+    if (response) {
+      return response;
     }
 
     if (currentUser.role !== "ADMIN") {

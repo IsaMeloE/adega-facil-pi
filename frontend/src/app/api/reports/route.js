@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { requireUser } from "@/lib/api-auth";
 import { toCents } from "@/lib/money";
 
 const paymentLabels = {
@@ -30,13 +30,10 @@ function nextDate(value) {
 
 export async function GET(request) {
   try {
-    const currentUser = await getCurrentUser();
+    const { response } = await requireUser();
 
-    if (!currentUser) {
-      return Response.json(
-        { error: "Acesso não autorizado." },
-        { status: 401 },
-      );
+    if (response) {
+      return response;
     }
 
     const { searchParams } = new URL(request.url);

@@ -1,17 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { requireUser } from "@/lib/api-auth";
 
 export async function GET() {
     try {
 
-        const currentUser = await getCurrentUser();
+        const { response } = await requireUser();
 
-        if (!currentUser) {
-            return Response.json(
-                { error: "Acesso não autorizado." },
-                { status: 401 },
-            );
+        if (response) {
+            return response;
         }
 
         const customers = await prisma.customer.findMany({
@@ -40,13 +37,10 @@ export async function POST(request) {
 
     try {
 
-        const currentUser = await getCurrentUser();
+        const { response } = await requireUser();
 
-        if (!currentUser) {
-            return Response.json(
-                { error: "Acesso não autorizado." },
-                { status: 401 },
-            );
+        if (response) {
+            return response;
         }
 
         body = await request.json();

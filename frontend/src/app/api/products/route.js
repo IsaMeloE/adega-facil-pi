@@ -1,15 +1,12 @@
 import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { requireUser } from "@/lib/api-auth";
 
 export async function GET() {
   try {
-    const currentUser = await getCurrentUser();
+    const { response } = await requireUser();
 
-    if (!currentUser) {
-      return Response.json(
-        { error: "Acesso não autorizado." },
-        { status: 401 },
-      );
+    if (response) {
+      return response;
     }
 
     const products = await prisma.product.findMany({
@@ -91,13 +88,10 @@ export async function POST(request) {
   }
 
   try {
-    const currentUser = await getCurrentUser();
+    const { user: currentUser, response } = await requireUser();
 
-    if (!currentUser) {
-      return Response.json(
-        { error: "Acesso não autorizado." },
-        { status: 401 },
-      );
+    if (response) {
+      return response;
     }
 
     const product = await prisma.product.create({
