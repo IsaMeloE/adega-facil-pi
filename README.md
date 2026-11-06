@@ -108,4 +108,14 @@ frontend/
 ## Segurança
 
 - Não envie arquivos `.env`, credenciais do banco ou PINs para o repositório.
-- Utilize dados fictícios nas demonstrações e evidências.
+
+## Acesso à aplicação
+
+A aplicação está publicada na Vercel:
+
+[Acessar o AdegaFácil](https://adega-facil-pi.vercel.app)
+
+## Infraestrutura em nuvem
+
+- **Aplicação web e API:** Vercel
+- **Banco de dados PostgreSQL:** Neon
