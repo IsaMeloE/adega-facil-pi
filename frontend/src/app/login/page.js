@@ -124,6 +124,9 @@ export default function LoginPage() {
 
             <div className={styles.field}>
               <label htmlFor="pin">PIN</label>
+              <p id="pin-instruction" className={styles.description}>
+                Digite seu PIN de 6 dígitos
+              </p>
               <input
                 id="pin"
                 type="password"
@@ -131,6 +134,7 @@ export default function LoginPage() {
                 pattern="[0-9]{6}"
                 maxLength={6}
                 autoComplete="current-password"
+                aria-describedby="pin-instruction"
                 value={pin}
                 onChange={(event) =>
                   setPin(event.target.value.replace(/\D/g, "").slice(0, 6))

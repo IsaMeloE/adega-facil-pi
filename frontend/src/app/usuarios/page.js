@@ -255,13 +255,16 @@ export default function UsuariosPage() {
                                                             updateUser(user, { pin: resetPins[user.id] || "" });
                                                         }}
                                                     >
+                                                        <label htmlFor={`reset-pin-${user.id}`}>
+                                                            Novo PIN de {user.name}
+                                                        </label>
                                                         <input
+                                                            id={`reset-pin-${user.id}`}
                                                             type="password"
                                                             inputMode="numeric"
                                                             pattern="[0-9]{6}"
                                                             maxLength={6}
                                                             placeholder="Novo PIN"
-                                                            aria-label={`Novo PIN para ${user.name}`}
                                                             value={resetPins[user.id] || ""}
                                                             onChange={(event) =>
                                                                 setResetPins((current) => ({
