@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { toCents } from "@/lib/money";
 
 const paymentLabels = {
   FIADO: "Fiado",
@@ -9,10 +10,6 @@ const paymentLabels = {
   CARTAO_DEBITO: "Cartão de débito",
   CARTAO_CREDITO: "Cartão de crédito",
 };
-
-function toCents(value) {
-  return Math.round(Number(value || 0) * 100);
-}
 
 function isValidDateOnly(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return false;

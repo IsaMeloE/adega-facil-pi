@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { toCents } from "@/lib/money";
 
 const paymentMethods = [
   "PIX",
@@ -8,10 +9,6 @@ const paymentMethods = [
   "CARTAO_DEBITO",
   "CARTAO_CREDITO",
 ];
-
-function toCents(value) {
-  return Math.round(Number(value || 0) * 100);
-}
 
 export async function GET() {
   try {

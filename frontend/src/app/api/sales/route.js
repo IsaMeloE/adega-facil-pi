@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { allocateLotsFefo } from "@/lib/sales/fefo";
+import { toCents } from "@/lib/money";
 
 export async function GET() {
   try {
@@ -184,8 +185,6 @@ export async function POST(request) {
 
     const inicioDoDia = new Date();
     inicioDoDia.setHours(0, 0, 0, 0);
-
-    const toCents = (value) => Math.round(Number(value || 0) * 100);
 
     const sale = await prisma.$transaction(
       async (tx) => {
