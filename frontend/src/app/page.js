@@ -4,14 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "../app/produtos/produtos.module.css";
 import UserBadge from "./components/UserBadge";
 import { formatCurrency } from "@/lib/formatters";
-
-function dateKey(date) {
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-}
+import { formatLocalDate } from "@/lib/dates";
 
 function validityStatus(expiresAt, today, limit) {
   if (!expiresAt) return null;
@@ -77,10 +70,10 @@ export default function Home() {
     return () => controller.abort();
   }, []);
 
-  const today = dateKey(new Date());
+  const today = formatLocalDate(new Date());
   const limitDate = new Date();
   limitDate.setDate(limitDate.getDate() + 30);
-  const limit = dateKey(limitDate);
+  const limit = formatLocalDate(limitDate);
 
   const todaySales = useMemo(
     () =>
@@ -88,7 +81,7 @@ export default function Home() {
         (sale) =>
           sale.status !== "CANCELLED" &&
           sale.createdAt &&
-          dateKey(new Date(sale.createdAt)) === today,
+          formatLocalDate(new Date(sale.createdAt)) === today,
       ),
     [sales, today],
   );

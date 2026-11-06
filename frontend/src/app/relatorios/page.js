@@ -4,13 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import styles from "../produtos/produtos.module.css";
 import UserBadge from "../components/UserBadge";
 import { formatCurrency } from "@/lib/formatters";
-
-function formatLocalDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+import { formatLocalDate } from "@/lib/dates";
 
 function getDateRange(period) {
   const today = new Date();
