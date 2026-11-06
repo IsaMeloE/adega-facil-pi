@@ -88,6 +88,7 @@ Execute os comandos na pasta `frontend`:
 | `npm run build` | Gera a versão de produção |
 | `npm run start` | Inicia a versão de produção |
 | `npm run lint` | Executa o ESLint |
+| `npm test` | Executa os testes unitários com Vitest |
 
 ## Estrutura principal
 
@@ -99,15 +100,68 @@ frontend/
 └── src/
     ├── app/
     │   ├── api/
-    │   └── ...
-    ├── components/
+    │   ├── components/
+    │   ├── fiados/
+    │   │   └── components/CreditHistory.js
+    │   ├── produtos/
+    │   │   └── components/ProductTable.js
+    │   └── vendas/
+    │       └── components/SalesHistory.js
     └── lib/
+        ├── sales/fefo.js
+        ├── api-auth.js
+        ├── dates.js
+        ├── formatters.js
+        └── money.js
 ```
+
+As páginas continuam responsáveis pelo estado da interface, carregamento de dados,
+formulários, filtragem e ações de cada módulo. As rotas da API continuam concentrando
+as transações Prisma, validações, permissões e contratos de resposta. As extrações
+realizadas não movem toda a lógica de negócio para serviços: elas isolam apenas regras
+ou trechos de apresentação que podem ser reutilizados e testados sem alterar o fluxo
+existente.
+
+Entre as refatorações atuais:
+
+- A regra FEFO usada no registro de vendas está em `src/lib/sales/fefo.js`, com testes
+  unitários em `fefo.test.js`. A função mantém a seleção de lotes válidos, a ordem por
+  vencimento e criação, o tratamento de lotes sem validade, a divisão da quantidade e
+  o erro para estoque válido insuficiente.
+- `src/lib/money.js`, `src/lib/formatters.js` e `src/lib/dates.js` centralizam,
+  respectivamente, a conversão para centavos, a formatação de moeda e a formatação
+  de datas no fuso local. Cada comportamento compartilhado possui testes unitários
+  quando aplicável.
+- `src/lib/api-auth.js` fornece a resposta padrão de autenticação para rotas
+  protegidas, enquanto as verificações específicas de perfil, permissões e respostas
+  `403` permanecem nas próprias rotas.
+- `CreditHistory`, `SalesHistory` e `ProductTable` são componentes de apresentação
+  extraídos das páginas de fiados, vendas e produtos. Estados, carregamento, ações,
+  busca, filtragem e regras específicas continuam nas páginas correspondentes.
 
 
 ## Segurança
 
 - Não envie arquivos `.env`, credenciais do banco ou PINs para o repositório.
+
+## Acessibilidade
+
+Foram implementadas melhorias de acessibilidade nas telas da aplicação:
+
+- Adicionado o atalho “Pular para o conteúdo”, com foco no conteúdo principal.
+- Incluído um único landmark `<main>` nas telas autenticadas, mantendo o login fora do `AppShell`.
+- Adicionado foco visível para links, botões, campos, selects, textareas e elementos `summary`.
+- Ajustado o contraste do indicador de foco e do status verde para atender aos requisitos de contraste verificados.
+- Mantidos rótulos associados aos campos e adicionadas instruções para os campos de PIN.
+- Adicionadas legendas descritivas às tabelas de usuários e movimentações de fiados.
+- Estados de carregamento relevantes são anunciados com `role="status"`.
+- Validações locais do formulário de vendas associam os erros aos campos relacionados, aplicam `aria-invalid` somente durante o erro e levam o foco ao primeiro campo envolvido.
+- O erro específico de redefinição de PIN em Usuários é associado ao campo da linha correspondente; erros gerais continuam em `role="alert"`.
+- Mensagens de sucesso continuam em `role="status"` e não recebem foco automático.
+
+As verificações automatizadas realizadas foram `npm test`, `npm run lint` e `npm run build` na pasta `frontend`. O `npm test` verificou 18 testes passando. O lint apresentou apenas warnings preexistentes nos arquivos gerados do Prisma, e o build apresentou warnings preexistentes do Next.js/Prisma.
+
+O autor também realizou verificação manual de navegação por teclado, leitor de tela e zoom. Essa verificação documenta os cenários conferidos, mas não certifica conformidade total com WCAG 2.2 AA.
 
 ## Acesso à aplicação
 
