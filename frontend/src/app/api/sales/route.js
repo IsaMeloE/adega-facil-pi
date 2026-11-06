@@ -32,10 +32,18 @@ export async function GET() {
             },
           },
         },
+        cancelledByUser: {
+          select: { id: true, name: true },
+        },
       },
     });
 
-    return NextResponse.json(sales);
+    return NextResponse.json(
+      sales.map((sale) => ({
+        ...sale,
+        canCancel: currentUser.role === "ADMIN",
+      })),
+    );
   } catch {
     return NextResponse.json(
       { error: "Não foi possível carregar as vendas." },
