@@ -48,6 +48,12 @@ textarea {
   font-size: var(--font-size-base);
 }
 
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid #20171a;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px #fff;
+}
+
 .app-shell {
   min-height: 100vh;
   display: grid;

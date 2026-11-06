@@ -80,9 +80,12 @@
   background-color: #fff;
 }
 
-.field input:focus,
-.field select:focus {
-  outline: 3px solid #ead0d8;
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible {
+  outline: 3px solid #20171a;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px #fff;
   border-color: #842b43;
 }
 
@@ -461,7 +464,7 @@
   padding: 5px 9px;
   border-radius: 999px;
   background: #edf8f2;
-  color: #2f855a;
+  color: #216b43;
   font-size: 0.7rem;
   font-weight: 700;
 }
