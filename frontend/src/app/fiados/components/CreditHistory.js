@@ -21,6 +21,9 @@ export default function CreditHistory({
 
                         <div className={styles.tableWrapper}>
                             <table>
+                                <caption className={styles.srOnly}>
+                                    Movimentações de crédito de {account.name}
+                                </caption>
                                 <thead>
                                     <tr>
                                         <th scope="col">Data</th>

@@ -219,7 +219,7 @@ export default function Home() {
           <h2>Validade e estoque</h2>
 
           {isLoading ? (
-            <p>Carregando alertas...</p>
+            <p role="status">Carregando alertas...</p>
           ) : alerts.length === 0 ? (
             <p>Nenhum alerta de validade ou estoque baixo.</p>
           ) : (
@@ -241,7 +241,7 @@ export default function Home() {
           <h2>Últimas vendas</h2>
 
           {isLoading ? (
-            <p>Carregando vendas...</p>
+            <p role="status">Carregando vendas...</p>
           ) : latestSales.length === 0 ? (
             <p>Nenhuma venda registrada.</p>
           ) : (

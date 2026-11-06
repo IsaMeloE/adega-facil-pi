@@ -220,6 +220,9 @@ export default function UsuariosPage() {
                 ) : (
                     <div className={styles.tableWrapper}>
                         <table>
+                            <caption className={styles.srOnly}>
+                                Usuários cadastrados, perfis, situações e ações disponíveis
+                            </caption>
                             <thead>
                                 <tr>
                                     <th scope="col">Nome</th>
