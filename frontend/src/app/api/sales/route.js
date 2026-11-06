@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { allocateLotsFefo } from "@/lib/sales/fefo";
 
 export async function GET() {
   try {
@@ -217,17 +218,7 @@ export async function POST(request) {
               where: { id: productId },
               include: {
                 lots: {
-                  where: {
-                    quantity: { gt: 0 },
-                    OR: [
-                      { expiresAt: null },
-                      { expiresAt: { gte: inicioDoDia } },
-                    ],
-                  },
-                  orderBy: [
-                    { expiresAt: { sort: "asc", nulls: "last" } },
-                    { createdAt: "asc" },
-                  ],
+                  orderBy: { createdAt: "asc" },
                 },
               },
             });
@@ -276,34 +267,23 @@ export async function POST(request) {
             );
           }
 
-          let remainingQuantity = baseQuantity;
-          const allocations = [];
+          const fefoResult = allocateLotsFefo({
+            lots: product.lots,
+            quantity: baseQuantity,
+            remainingByLotId,
+            startOfDay: inicioDoDia,
+            productName: product.name,
+          });
 
-          for (const lot of product.lots) {
-            if (remainingQuantity === 0) break;
-
-            const lotRemaining = remainingByLotId.get(lot.id) ?? 0;
-            const quantityFromLot = Math.min(remainingQuantity, lotRemaining);
-
-            if (quantityFromLot === 0) continue;
-
-            allocations.push({ lot, quantity: quantityFromLot });
-            remainingByLotId.set(lot.id, lotRemaining - quantityFromLot);
-            remainingQuantity -= quantityFromLot;
-
+          for (const [lotId, quantity] of fefoResult.deductionsByLotId) {
             deductionsByLotId.set(
-              lot.id,
-              (deductionsByLotId.get(lot.id) || 0) + quantityFromLot,
+              lotId,
+              (deductionsByLotId.get(lotId) || 0) + quantity,
             );
           }
 
-          if (remainingQuantity > 0) {
-            throw Object.assign(
-              new Error(
-                `Estoque válido insuficiente para ${product.name}.`,
-              ),
-              { status: 409 },
-            );
+          for (const [lotId, quantity] of fefoResult.remainingByLotId) {
+            remainingByLotId.set(lotId, quantity);
           }
 
           totalCents += unitPriceCents * item.quantity;
@@ -314,7 +294,7 @@ export async function POST(request) {
             quantity: item.quantity,
             baseQuantity,
             unitPriceCents,
-            allocations,
+            allocations: fefoResult.allocations,
           });
         }
 
