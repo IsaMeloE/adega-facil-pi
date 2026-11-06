@@ -46,6 +46,29 @@ export default function VendasPage() {
   const [cancellingSaleId, setCancellingSaleId] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [invalidFields, setInvalidFields] = useState({});
+
+  function focusField(fieldId) {
+    document.getElementById(fieldId)?.focus();
+  }
+
+  function setLocalError(message, fields, focusId) {
+    setError(message);
+    setInvalidFields(
+      fields.reduce((current, field) => ({ ...current, [field]: true }), {}),
+    );
+    focusField(focusId);
+  }
+
+  function clearInvalidField(field) {
+    setInvalidFields((current) => {
+      if (!current[field]) return current;
+
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -112,12 +135,26 @@ export default function VendasPage() {
     event.preventDefault();
     setError("");
     setSuccess("");
+    setInvalidFields({});
 
     const product = products.find((item) => item.id === productId);
     const amount = Number(quantity);
 
-    if (!product || !Number.isInteger(amount) || amount < 1) {
-      setError("Selecione um produto e informe uma quantidade válida.");
+    if (!product) {
+      setLocalError(
+        "Selecione um produto e informe uma quantidade válida.",
+        ["productId"],
+        "productId",
+      );
+      return;
+    }
+
+    if (!Number.isInteger(amount) || amount < 1) {
+      setLocalError(
+        "Selecione um produto e informe uma quantidade válida.",
+        ["quantity"],
+        "quantity",
+      );
       return;
     }
 
@@ -127,7 +164,11 @@ export default function VendasPage() {
         product.unitsPerPack < 2 ||
         product.packSalePrice == null)
     ) {
-      setError("Esse produto não tem fardo configurado.");
+      setLocalError(
+        "Esse produto não tem fardo configurado.",
+        ["saleMode"],
+        "saleMode",
+      );
       return;
     }
 
@@ -147,7 +188,11 @@ export default function VendasPage() {
       }, 0);
 
     if (quantityInCart + amount * unitsPerSale > availableStock) {
-      setError(`Estoque insuficiente para ${product.name}.`);
+      setLocalError(
+        `Estoque insuficiente para ${product.name}.`,
+        ["quantity"],
+        "quantity",
+      );
       return;
     }
 
@@ -194,18 +239,31 @@ export default function VendasPage() {
   async function finalizarVenda() {
     setError("");
     setSuccess("");
+    setInvalidFields({});
     if (!paymentMethod) {
-      setError("Selecione o método de pagamento.");
+      setLocalError(
+        "Selecione o método de pagamento.",
+        ["paymentMethod"],
+        "paymentMethod",
+      );
       return;
     }
 
     if (paymentMethod === "FIADO" && !customerId) {
-      setError("Selecione um cliente para registrar a venda fiada.");
+      setLocalError(
+        "Selecione um cliente para registrar a venda fiada.",
+        ["customerId"],
+        "customerId",
+      );
       return;
     }
 
     if (isDelivery && !deliveryAddress.trim()) {
-      setError("Informe o endereço da entrega.");
+      setLocalError(
+        "Informe o endereço da entrega.",
+        ["deliveryAddress"],
+        "deliveryAddress",
+      );
       return;
     }
 
@@ -213,7 +271,11 @@ export default function VendasPage() {
       isDelivery &&
       (!Number.isFinite(Number(deliveryFee)) || Number(deliveryFee) < 0)
     ) {
-      setError("Informe uma taxa de entrega válida.");
+      setLocalError(
+        "Informe uma taxa de entrega válida.",
+        ["deliveryFee"],
+        "deliveryFee",
+      );
       return;
     }
 
@@ -353,6 +415,8 @@ export default function VendasPage() {
                       const nextProduct = products.find((item) => item.id === nextProductId);
 
                       setProductId(nextProductId);
+                      clearInvalidField("productId");
+                      clearInvalidField("saleMode");
 
                       if (
                         !Number.isInteger(nextProduct?.unitsPerPack) ||
@@ -363,6 +427,10 @@ export default function VendasPage() {
                       }
                     }}
                     required
+                    aria-describedby={
+                      invalidFields.productId ? "sale-error" : undefined
+                    }
+                    aria-invalid={invalidFields.productId || undefined}
                   >
                     <option value="">Selecione um produto</option>
 
@@ -391,8 +459,15 @@ export default function VendasPage() {
                   <select
                     id="saleMode"
                     value={saleMode}
-                    onChange={(event) => setSaleMode(event.target.value)}
+                    onChange={(event) => {
+                      setSaleMode(event.target.value);
+                      clearInvalidField("saleMode");
+                    }}
                     disabled={isSaving}
+                    aria-describedby={
+                      invalidFields.saleMode ? "sale-error" : undefined
+                    }
+                    aria-invalid={invalidFields.saleMode || undefined}
                   >
                     <option value="UNIT">Unidade</option>
                     <option
@@ -415,8 +490,15 @@ export default function VendasPage() {
                     min="1"
                     step="1"
                     value={quantity}
-                    onChange={(event) => setQuantity(event.target.value)}
+                    onChange={(event) => {
+                      setQuantity(event.target.value);
+                      clearInvalidField("quantity");
+                    }}
                     required
+                    aria-describedby={
+                      invalidFields.quantity ? "sale-error" : undefined
+                    }
+                    aria-invalid={invalidFields.quantity || undefined}
                   />
                 </div>
 
@@ -506,8 +588,15 @@ export default function VendasPage() {
                     <select
                       id="paymentMethod"
                       value={paymentMethod}
-                      onChange={(event) => setPaymentMethod(event.target.value)}
+                      onChange={(event) => {
+                        setPaymentMethod(event.target.value);
+                        clearInvalidField("paymentMethod");
+                      }}
                       disabled={isSaving}
+                      aria-describedby={
+                        invalidFields.paymentMethod ? "sale-error" : undefined
+                      }
+                      aria-invalid={invalidFields.paymentMethod || undefined}
                     >
                       <option value="">Selecione uma opção</option>
                       <option value="FIADO">Fiado</option>
@@ -537,9 +626,14 @@ export default function VendasPage() {
                           }
 
                           setCustomerId(selectedCustomerId);
+                          clearInvalidField("customerId");
                         }}
                         required
                         disabled={isSaving}
+                        aria-describedby={
+                          invalidFields.customerId ? "sale-error" : undefined
+                        }
+                        aria-invalid={invalidFields.customerId || undefined}
                       >
                         <option value="">Selecione um cliente</option>
 
@@ -575,8 +669,15 @@ export default function VendasPage() {
                             min="0"
                             step="0.01"
                             value={deliveryFee}
-                            onChange={(event) => setDeliveryFee(event.target.value)}
+                            onChange={(event) => {
+                              setDeliveryFee(event.target.value);
+                              clearInvalidField("deliveryFee");
+                            }}
                             disabled={isSaving}
+                            aria-describedby={
+                              invalidFields.deliveryFee ? "sale-error" : undefined
+                            }
+                            aria-invalid={invalidFields.deliveryFee || undefined}
                           />
                         </div>
 
@@ -586,11 +687,20 @@ export default function VendasPage() {
                             id="deliveryAddress"
                             type="text"
                             value={deliveryAddress}
-                            onChange={(event) => setDeliveryAddress(event.target.value)}
+                            onChange={(event) => {
+                              setDeliveryAddress(event.target.value);
+                              clearInvalidField("deliveryAddress");
+                            }}
                             placeholder="Rua, número e referência"
                             maxLength={255}
                             required
                             disabled={isSaving}
+                            aria-describedby={
+                              invalidFields.deliveryAddress
+                                ? "sale-error"
+                                : undefined
+                            }
+                            aria-invalid={invalidFields.deliveryAddress || undefined}
                           />
                         </div>
                       </div>
@@ -638,7 +748,7 @@ export default function VendasPage() {
           </section>
 
           {error && (
-            <p className={styles.error} role="alert">
+            <p id="sale-error" className={styles.error} role="alert">
               {error}
             </p>
           )}
