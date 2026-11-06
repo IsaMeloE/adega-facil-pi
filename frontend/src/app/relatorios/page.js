@@ -89,7 +89,7 @@ export default function RelatoriosPage() {
   }
 
   return (
-    <main className={`${styles.container} ${styles.salesPage}`}>
+    <main id="main-content" tabIndex={-1} className={`${styles.container} ${styles.salesPage}`}>
       <header className={`${styles.header} ${styles.salesHeader}`}>
         <div>
           <h1>Relatórios</h1>

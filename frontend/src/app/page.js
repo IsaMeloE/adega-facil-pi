@@ -162,7 +162,7 @@ export default function Home() {
   ).length;
 
   return (
-    <>
+    <main id="main-content" tabIndex={-1}>
       <header className="topbar">
         <div>
           <p className="eyebrow">GESTÃO DE BEBIDAS</p>
@@ -296,6 +296,6 @@ export default function Home() {
           )}
         </article>
       </section>
-    </>
+    </main>
   );
 }

@@ -316,7 +316,7 @@ export default function VendasPage() {
   const cartTotal = (cartSubtotalCents + deliveryFeeCents) / 100;
 
   return (
-    <main className={`${styles.container} ${styles.salesPage}`}>
+    <main id="main-content" tabIndex={-1} className={`${styles.container} ${styles.salesPage}`}>
       <header className={`${styles.header} ${styles.salesHeader}`}>
         <div>
           <h1>Vendas</h1>
@@ -651,9 +651,8 @@ export default function VendasPage() {
 
         </div>
 
-        <section
+        <div
           className={`${styles.listCard} ${styles.salesHistory}`}
-          aria-labelledby="sales-title"
         >
 
           <SalesHistory
@@ -662,7 +661,7 @@ export default function VendasPage() {
             cancelarVenda={cancelarVenda}
             cancellingSaleId={cancellingSaleId}
           />
-        </section>
+        </div>
       </div>
     </main>
   );

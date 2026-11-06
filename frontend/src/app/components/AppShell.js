@@ -71,6 +71,15 @@ export default function AppShell({ children }) {
     }
   }
 
+  function focusMainContent(event) {
+    const mainContent = document.getElementById("main-content");
+
+    if (!mainContent) return;
+
+    event.preventDefault();
+    mainContent.focus();
+  }
+
   if (pathname === "/login") {
     return children;
   }
@@ -107,6 +116,13 @@ export default function AppShell({ children }) {
           </div>
 
           <nav aria-label="Navegação principal" className="nav-list">
+            <Link
+              className="skip-link"
+              href="#main-content"
+              onClick={focusMainContent}
+            >
+              Pular para o conteúdo
+            </Link>
             {visibleModules.map((module) => {
               const isActive = pathname === module.href;
 

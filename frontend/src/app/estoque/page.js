@@ -145,7 +145,7 @@ export default function EstoquePage() {
   );
 
   return (
-    <main className={styles.container}>
+    <main id="main-content" tabIndex={-1} className={styles.container}>
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>CONTROLE</p>

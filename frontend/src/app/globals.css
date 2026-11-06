@@ -100,6 +100,30 @@ textarea {
   margin-top: 20px;
 }
 
+.skip-link {
+  position: absolute;
+  z-index: 1;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 8px 12px;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  background: white;
+  color: var(--sidebar);
+}
+
 .nav-item {
   font-size: 12px;
   min-height: 42px;
